@@ -175,9 +175,9 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
   };
 
   const SectionHeader: React.FC<{ title: string; subtitle?: string; icon: string }> = ({ title, subtitle, icon }) => (
-    <View className="mb-4 pb-3 border-b border-primary-100 dark:border-primary-900/50">
+    <View className="mb-4 pb-3" style={{ borderBottomWidth: 1, borderBottomColor: '#a78bfa30' }}>
       <View className="flex-row items-center mb-1">
-        <View className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full items-center justify-center mr-3">
+        <View className="w-10 h-10 rounded-full items-center justify-center mr-3" style={{ backgroundColor: '#a78bfa20' }}>
           <Text className="text-xl">{icon}</Text>
         </View>
         <View className="flex-1">
@@ -185,7 +185,7 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
             {title}
           </Text>
           {subtitle && (
-            <Text className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
+            <Text style={{ color: '#a78bfa' }} className="text-xs mt-0.5">
               {subtitle}
             </Text>
           )}
@@ -198,8 +198,8 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
     <View className="flex-1 bg-dream-cloud dark:bg-dream-night">
       {/* Header */}
       <View 
-        style={{ paddingTop: insets.top + 12 }}
-        className="bg-primary-600 pb-5 px-6"
+        style={{ paddingTop: insets.top + 12, backgroundColor: '#312e81' }}
+        className="pb-5 px-6"
       >
         <View className="flex-row items-center justify-between mb-4">
           <TouchableOpacity 
@@ -207,16 +207,16 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               navigation.goBack();
             }}
-            className="w-10 h-10 rounded-full bg-white/20 items-center justify-center"
+            className="w-10 h-10 rounded-full bg-white/10 items-center justify-center"
           >
-            <Ionicons name="close" size={22} color="#ffffff" />
+            <Ionicons name="close" size={22} color="#fef08a" />
           </TouchableOpacity>
           
           <View className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-white">
+            <Text className="text-2xl font-bold" style={{ color: '#fef08a' }}>
               ✨ Nouveau Rêve
             </Text>
-            <Text className="text-white/80 text-xs mt-0.5">
+            <Text style={{ color: '#a78bfa' }} className="text-xs mt-0.5">
               Capturez vos aventures nocturnes
             </Text>
           </View>
@@ -227,17 +227,17 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
         {/* Progress bar */}
         <View className="mt-2">
           <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-white/90 text-xs font-medium">
+            <Text style={{ color: '#a78bfa' }} className="text-xs font-medium">
               Complété
             </Text>
-            <Text className="text-white font-bold text-xs">
+            <Text style={{ color: '#fef08a' }} className="font-bold text-xs">
               {progress}%
             </Text>
           </View>
-          <View className="bg-white/20 rounded-full h-2.5 overflow-hidden">
+          <View className="bg-white/10 rounded-full h-2.5 overflow-hidden">
             <View 
-              className="bg-white h-full rounded-full"
-              style={{ width: `${progress}%` }}
+              style={{ width: `${progress}%`, backgroundColor: '#fef08a' }}
+              className="h-full rounded-full"
             />
           </View>
         </View>
@@ -278,21 +278,26 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowDatePicker(true);
               }}
-              className="bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-200 dark:border-primary-800 rounded-2xl px-4 py-3.5 flex-row items-center justify-between"
+              className="rounded-2xl px-4 py-3.5 flex-row items-center justify-between"
+              style={{ 
+                backgroundColor: '#fef08a15',
+                borderWidth: 2,
+                borderColor: '#fef08a'
+              }}
             >
               <View className="flex-1">
-                <Text className="text-primary-900 dark:text-primary-100 text-base font-medium">
+                <Text className="text-base font-medium" style={{ color: '#312e81' }}>
                   {new Date(formData.date).toLocaleDateString('fr-FR', {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric'
                   })}
                 </Text>
-                <Text className="text-primary-600 dark:text-primary-400 text-xs mt-0.5 capitalize">
+                <Text className="text-xs mt-0.5 capitalize" style={{ color: '#a78bfa' }}>
                   {new Date(formData.date).toLocaleDateString('fr-FR', { weekday: 'long' })}
                 </Text>
               </View>
-              <Ionicons name="calendar" size={24} color="#7c6df1" />
+              <Ionicons name="calendar" size={24} color="#fef08a" />
             </TouchableOpacity>
             
             {showDatePicker && (
@@ -412,8 +417,8 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
             {/* Tags suggérés */}
             {availableTags.length > 0 && (
               <View className="mb-3">
-                <Text className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                  Suggestions (cliquez pour ajouter) :
+                <Text className="text-xs mb-2" style={{ color: '#a78bfa' }}>
+                  💡 Suggestions (cliquez pour ajouter) :
                 </Text>
                 <View className="flex-row flex-wrap gap-2">
                   {availableTags
@@ -426,9 +431,14 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                           setFormData({ ...formData, tags: [...formData.tags, tag] });
                         }}
-                        className="bg-primary-100 dark:bg-primary-900/30 border border-primary-300 dark:border-primary-700 rounded-full px-3 py-1.5"
+                        className="rounded-full px-3 py-1.5"
+                        style={{ 
+                          backgroundColor: '#a78bfa20',
+                          borderWidth: 1,
+                          borderColor: '#a78bfa'
+                        }}
                       >
-                        <Text className="text-primary-700 dark:text-primary-300 text-xs font-medium">
+                        <Text className="text-xs font-medium" style={{ color: '#312e81' }}>
                           + {tag}
                         </Text>
                       </TouchableOpacity>
@@ -502,23 +512,25 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
           <TouchableOpacity
             onPress={handleSubmit}
             disabled={loading || !formData.description.trim()}
-            className={`
-              rounded-full py-4 shadow-lg
-              ${loading || !formData.description.trim() 
-                ? 'bg-gray-300 dark:bg-gray-700' 
-                : 'bg-primary-600 active:bg-primary-700'}
-            `.trim()}
+            className="rounded-full py-4 shadow-lg"
+            style={{
+              backgroundColor: loading || !formData.description.trim() 
+                ? '#d1d5db' 
+                : '#312e81'
+            }}
             activeOpacity={0.8}
           >
             <View className="flex-row items-center justify-center">
               {loading ? (
                 <>
-                  <Text className="text-white font-bold text-lg">⏳ Enregistrement...</Text>
+                  <Text className="font-bold text-lg" style={{ color: '#a78bfa' }}>
+                    ⏳ Enregistrement...
+                  </Text>
                 </>
               ) : (
                 <>
-                  <Ionicons name="checkmark-circle" size={26} color="#ffffff" />
-                  <Text className="text-white font-bold text-lg ml-2">
+                  <Ionicons name="checkmark-circle" size={26} color="#fef08a" />
+                  <Text className="font-bold text-lg ml-2" style={{ color: '#fef08a' }}>
                     Enregistrer mon rêve
                   </Text>
                 </>
@@ -527,7 +539,7 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
           </TouchableOpacity>
           
           {!formData.description.trim() && (
-            <Text className="text-gray-500 dark:text-gray-400 text-center text-sm mt-3">
+            <Text className="text-center text-sm mt-3" style={{ color: '#a78bfa' }}>
               ℹ️ La description est obligatoire
             </Text>
           )}
