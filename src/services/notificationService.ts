@@ -114,18 +114,62 @@ export const initializeNotifications = async (): Promise<boolean> => {
 /**
  * Envoie une notification de test immédiate
  */
-export const sendTestNotification = async () => {
-  const affirmation = await fetchAffirmation();
-  
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: '✨ Votre affirmation du jour (Test)',
-      body: affirmation,
-      sound: true,
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-      seconds: 2,
-    },
-  });
+export const sendTestNotification = async (): Promise<boolean> => {
+  try {
+    // Vérifie les permissions d'abord
+    const hasPermission = await requestNotificationPermissions();
+    if (!hasPermission) {
+      console.error('Permissions de notification non accordées');
+      return false;
+    }
+
+    const affirmation = await fetchAffirmation();
+    
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: '✨ Test de notification',
+        body: affirmation,
+        sound: true,
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: 2,
+      },
+    });
+    
+    console.log('Notification de test planifiée dans 2 secondes');
+    return true;
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi de la notification de test:', error);
+    return false;
+  }
+};
+
+/**
+ * Vérifie toutes les notifications planifiées
+ */
+export const getAllScheduledNotifications = async () => {
+  try {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    console.log('Notifications planifiées:', scheduled);
+    return scheduled;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des notifications:', error);
+    return [];
+  }
+};
+
+/**
+ * Annule toutes les notifications
+ */
+export const cancelAllNotifications = async (): Promise<boolean> => {
+  try {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    console.log('Toutes les notifications annulées');
+    return true;
+  } catch (error) {
+    console.error('Erreur lors de l\'annulation des notifications:', error);
+    return false;
+  }
 };
