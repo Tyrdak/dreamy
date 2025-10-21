@@ -188,6 +188,7 @@ export const updateUserProfile = async (updates: Partial<UserProfile>): Promise<
 const DEFAULT_SETTINGS: Settings = {
   notificationsEnabled: true,
   notificationTime: '08:00',
+  dailyQuoteEnabled: true,
   theme: 'auto',
   lucidModeEnabled: false,
   realityCheckFrequency: 4,

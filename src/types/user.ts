@@ -15,6 +15,7 @@ export interface Settings {
   // Notifications
   notificationsEnabled: boolean;
   notificationTime: string; // Format: "HH:mm" (défaut: "08:00")
+  dailyQuoteEnabled: boolean; // Citation du jour
   
   // Apparence
   theme: 'light' | 'dark' | 'auto';

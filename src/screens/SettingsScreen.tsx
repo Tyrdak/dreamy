@@ -2,11 +2,10 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import * as Notifications from 'expo-notifications';
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { exportDreamsAsJSON, exportDreamsAsText, exportStatsAsText, getAllScheduledNotifications, sendTestNotification } from '../services';
+import { exportDreamsAsJSON, exportDreamsAsText, exportStatsAsText, getAllScheduledNotifications, initializeNotifications, scheduleCustomDailyNotification, sendTestNotification } from '../services';
 import { getDreams, getSettings, getUserProfile, resetAllData, updateSettings } from '../storage';
 import { Settings } from '../types';
 import { calculateDreamStatistics } from '../utils';
@@ -123,82 +122,115 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
 
   const handleToggleNotifications = async (enabled: boolean) => {
     if (!settings) return;
-
-    if (enabled) {
-      const { status } = await Notifications.requestPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission requise',
-          'Activez les notifications dans les paramètres de votre appareil pour recevoir vos rappels quotidiens'
-        );
-        return;
-      }
-    }
-
+    
     const updatedSettings = { ...settings, notificationsEnabled: enabled };
     setSettings(updatedSettings);
     await updateSettings(updatedSettings);
     
+    // Réinitialise les notifications
+    await initializeNotifications({
+      dailyReminderEnabled: enabled,
+      dailyReminderTime: updatedSettings.notificationTime,
+      lucidModeEnabled: updatedSettings.lucidModeEnabled,
+      dailyQuoteEnabled: updatedSettings.dailyQuoteEnabled,
+    });
+    
     if (enabled) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
         '✅ Notifications activées',
-        'Vous recevrez une affirmation chaque matin à 8h',
+        `Vous recevrez un rappel quotidien à ${updatedSettings.notificationTime}`,
         [{ text: 'Super !' }]
       );
     }
   };
 
-  const handleTestNotification = async () => {
+  const handleToggleDailyQuote = async (enabled: boolean) => {
+    if (!settings) return;
+    
+    const updatedSettings = { ...settings, dailyQuoteEnabled: enabled };
+    setSettings(updatedSettings);
+    await updateSettings(updatedSettings);
+    
+    await initializeNotifications({
+      dailyReminderEnabled: updatedSettings.notificationsEnabled,
+      dailyReminderTime: updatedSettings.notificationTime,
+      lucidModeEnabled: updatedSettings.lucidModeEnabled,
+      dailyQuoteEnabled: enabled,
+    });
+    
+    if (enabled) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        '💭 Citation du jour',
+        'Vous recevrez une citation inspirante chaque matin à 8h',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const handleChangeNotificationTime = () => {
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+    
+    Alert.alert(
+      '⏰ Choisir l\'heure',
+      'Sélectionnez l\'heure de votre rappel quotidien',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        ...['06:00', '07:00', '08:00', '09:00', '20:00', '21:00', '22:00'].map(time => ({
+          text: time,
+          onPress: async () => {
+            if (!settings) return;
+            const updatedSettings = { ...settings, notificationTime: time };
+            setSettings(updatedSettings);
+            await updateSettings(updatedSettings);
+            
+            await scheduleCustomDailyNotification(
+              parseInt(time.split(':')[0]),
+              parseInt(time.split(':')[1])
+            );
+            
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            Alert.alert('✅ Heure mise à jour', `Rappel quotidien à ${time}`);
+          },
+        })),
+      ]
+    );
+  };
+
+  const handleTestNotification = async (type: 'daily' | 'lucid' | 'quote') => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      const success = await sendTestNotification();
+      const success = await sendTestNotification(type);
       
       if (success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Alert.alert(
-          '📬 Notification programmée !',
-          'Vous recevrez une notification dans 2 secondes.\n\nSi vous ne la recevez pas, vérifiez les permissions dans les réglages de votre appareil.',
+          '✅ Test envoyé !',
+          `Notification programmée dans 2 secondes.\n\n💡 Mettez l'app en arrière-plan pour la voir apparaître.`,
           [{ text: 'OK' }]
         );
       } else {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Alert.alert(
           '❌ Erreur',
-          'Les notifications ne sont pas autorisées.\n\nActivez-les dans Réglages > Notifications > Dreamy',
+          'Activez les notifications dans les réglages de votre appareil.',
           [{ text: 'OK' }]
         );
       }
     } catch (error) {
-      console.error('Erreur test notification:', error);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Erreur', 'Impossible d\'envoyer la notification de test');
+      Alert.alert('Erreur', String(error));
     }
   };
 
-  const handleShowScheduledNotifications = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  const handleShowScheduled = async () => {
     const scheduled = await getAllScheduledNotifications();
     
     if (scheduled.length === 0) {
-      Alert.alert(
-        '📭 Aucune notification',
-        'Vous n\'avez aucune notification planifiée pour le moment.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('📭 Aucune notification planifiée', '', [{ text: 'OK' }]);
     } else {
-      const message = scheduled.map((notif, index) => {
-        const trigger = notif.trigger as any;
-        if (trigger.type === 'calendar') {
-          return `${index + 1}. Quotidienne à ${trigger.hour}h${trigger.minute.toString().padStart(2, '0')}`;
-        } else if (trigger.type === 'timeInterval') {
-          return `${index + 1}. Dans ${trigger.seconds}s`;
-        }
-        return `${index + 1}. ${trigger.type}`;
-      }).join('\n');
-      
       Alert.alert(
-        `📬 ${scheduled.length} notification(s) planifiée(s)`,
-        message,
+        `📬 ${scheduled.length} notification(s)`,
+        scheduled.map((n, i) => `${i + 1}. ${n.content.title}`).join('\n'),
         [{ text: 'OK' }]
       );
     }
@@ -218,11 +250,19 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
     setSettings(updatedSettings);
     await updateSettings(updatedSettings);
     
+    await initializeNotifications({
+      dailyReminderEnabled: updatedSettings.notificationsEnabled,
+      dailyReminderTime: updatedSettings.notificationTime,
+      lucidModeEnabled: enabled,
+      dailyQuoteEnabled: updatedSettings.dailyQuoteEnabled,
+    });
+    
     if (enabled) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
         '✨ Mode Lucide activé',
-        'Vous recevrez des "reality checks" pour vous aider à reconnaître vos rêves',
-        [{ text: 'Compris' }]
+        'Vous recevrez des "reality checks" aléatoires dans la journée',
+        [{ text: 'OK' }]
       );
     }
   };
@@ -356,9 +396,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
         <SectionHeader icon="🔔" title="Notifications" />
         <View className="px-6">
           <View className="bg-white dark:bg-dream-dusk rounded-3xl p-5 shadow-sm">
+            {/* Rappel quotidien */}
             <SettingRow
-              title="Rappels quotidiens"
-              subtitle="Recevez une affirmation chaque matin"
+              title="Rappel quotidien"
+              subtitle="Notez vos rêves chaque jour"
               value={settings.notificationsEnabled}
               onValueChange={handleToggleNotifications}
             />
@@ -367,38 +408,67 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
               <>
                 <View className="h-px bg-gray-200 dark:bg-gray-700 my-3" />
                 
-                <View className="flex-row justify-between items-center mb-3">
+                <TouchableOpacity
+                  onPress={handleChangeNotificationTime}
+                  className="flex-row justify-between items-center py-2"
+                >
                   <Text style={{ color: '#a78bfa' }} className="text-sm">
                     Heure du rappel
                   </Text>
-                  <Text className="text-dream-night dark:text-dream-cloud font-semibold">
-                    {settings.notificationTime}
+                  <View className="flex-row items-center">
+                    <Text className="text-dream-night dark:text-dream-cloud font-semibold mr-2">
+                      {settings.notificationTime}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={16} color="#a78bfa" />
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => handleTestNotification('daily')}
+                  className="mt-3 rounded-2xl py-3 items-center"
+                  style={{ backgroundColor: '#312e81' }}
+                >
+                  <Text className="font-semibold" style={{ color: '#fef08a' }}>
+                    🔔 Tester le rappel
                   </Text>
-                </View>
+                </TouchableOpacity>
+              </>
+            )}
 
-                <View className="gap-2">
-                  <TouchableOpacity
-                    onPress={handleTestNotification}
-                    className="rounded-2xl py-3 items-center"
-                    style={{ backgroundColor: '#fef08a20', borderWidth: 1, borderColor: '#fef08a' }}
-                    activeOpacity={0.7}
-                  >
-                    <Text className="font-semibold text-dream-night dark:text-dream-cloud">
-                      📬 Tester maintenant
-                    </Text>
-                  </TouchableOpacity>
+            {/* Citation du jour */}
+            <View className="h-px bg-gray-200 dark:bg-gray-700 my-4" />
+            
+            <SettingRow
+              title="Citation du jour"
+              subtitle="Recevez une citation à 8h"
+              value={settings.dailyQuoteEnabled}
+              onValueChange={handleToggleDailyQuote}
+            />
 
-                  <TouchableOpacity
-                    onPress={handleShowScheduledNotifications}
-                    className="rounded-2xl py-2 items-center"
-                    style={{ backgroundColor: '#a78bfa20' }}
-                    activeOpacity={0.7}
-                  >
-                    <Text className="text-sm" style={{ color: '#a78bfa' }}>
-                      📋 Voir les notifications planifiées
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+            {settings.dailyQuoteEnabled && (
+              <TouchableOpacity
+                onPress={() => handleTestNotification('quote')}
+                className="mt-2 rounded-2xl py-3 items-center"
+                style={{ backgroundColor: '#a78bfa20', borderWidth: 1, borderColor: '#a78bfa' }}
+              >
+                <Text className="font-semibold text-dream-night dark:text-dream-cloud">
+                  💭 Tester la citation
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Bouton voir notifications planifiées */}
+            {(settings.notificationsEnabled || settings.dailyQuoteEnabled || settings.lucidModeEnabled) && (
+              <>
+                <View className="h-px bg-gray-200 dark:bg-gray-700 my-4" />
+                <TouchableOpacity
+                  onPress={handleShowScheduled}
+                  className="py-2"
+                >
+                  <Text className="text-center text-sm" style={{ color: '#a78bfa' }}>
+                    📋 Voir toutes les notifications planifiées
+                  </Text>
+                </TouchableOpacity>
               </>
             )}
           </View>
@@ -454,7 +524,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
           <View className="bg-white dark:bg-dream-dusk rounded-3xl p-5 shadow-sm">
             <SettingRow
               title="Mode Lucide"
-              subtitle="Reality checks pour reconnaître vos rêves"
+              subtitle="Reality checks aléatoires dans la journée"
               value={settings.lucidModeEnabled}
               onValueChange={handleToggleLucidMode}
             />
@@ -464,34 +534,44 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
                 <View className="h-px bg-gray-200 dark:bg-gray-700 my-3" />
                 
                 <Text style={{ color: '#a78bfa' }} className="text-sm mb-3">
-                  Fréquence des reality checks
+                  Nombre de reality checks par jour
                 </Text>
                 <View className="flex-row gap-2">
-                  {[2, 4, 6, 8].map((hours) => (
+                  {[3, 5, 7, 10].map((count) => (
                     <TouchableOpacity
-                      key={hours}
+                      key={count}
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        updateSettings({ realityCheckFrequency: hours });
-                        setSettings({ ...settings, realityCheckFrequency: hours });
+                        updateSettings({ realityCheckFrequency: count });
+                        setSettings({ ...settings, realityCheckFrequency: count });
                       }}
                       className="flex-1 py-3 rounded-xl items-center"
                       style={{
-                        backgroundColor: settings.realityCheckFrequency === hours ? '#312e81' : '#f3f4f6',
+                        backgroundColor: settings.realityCheckFrequency === count ? '#312e81' : '#f3f4f6',
                       }}
                       activeOpacity={0.7}
                     >
                       <Text
                         className="font-semibold"
                         style={{
-                          color: settings.realityCheckFrequency === hours ? '#fef08a' : '#6b7280',
+                          color: settings.realityCheckFrequency === count ? '#fef08a' : '#6b7280',
                         }}
                       >
-                        {hours}h
+                        {count}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
+
+                <TouchableOpacity
+                  onPress={() => handleTestNotification('lucid')}
+                  className="mt-3 rounded-2xl py-3 items-center"
+                  style={{ backgroundColor: '#fef08a20', borderWidth: 1, borderColor: '#fef08a' }}
+                >
+                  <Text className="font-semibold text-dream-night dark:text-dream-cloud">
+                    ✨ Tester un reality check
+                  </Text>
+                </TouchableOpacity>
               </>
             )}
           </View>

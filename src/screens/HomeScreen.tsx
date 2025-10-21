@@ -6,7 +6,7 @@ import React, { useCallback, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DreamCard, StreakCard } from '../components';
-import { fetchAffirmation, getMoonPhase } from '../services';
+import { getMoonPhase } from '../services';
 import { getDreams, getDreamStreak, getUserProfile } from '../storage';
 import { Dream, DreamStreak } from '../types';
 import { calculateDreamStatistics } from '../utils';
@@ -19,7 +19,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const [username, setUsername] = useState('');
   const [streak, setStreak] = useState<DreamStreak | null>(null);
-  const [affirmation, setAffirmation] = useState<string | null>(null);
   const [dreams, setDreams] = useState<Dream[]>([]);
   const [stats, setStats] = useState<any>(null);
   const moonPhase = getMoonPhase(new Date());
@@ -59,11 +58,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     setStreak(currentStreak);
   };
 
-  // Charge l'affirmation du jour
-  const loadAffirmation = async () => {
-    const newAffirmation = await fetchAffirmation();
-    setAffirmation(newAffirmation);
-  };
 
   // Charge les rêves et stats
   const loadDreams = async () => {
@@ -78,7 +72,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     useCallback(() => {
       loadUserProfile();
       loadStreak();
-      loadAffirmation();
       loadDreams();
     }, [])
   );
@@ -137,19 +130,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </View>
         )}
 
-        {/* Affirmation du jour */}
-        {affirmation && (
-          <View className="px-6 mt-4">
-            <View
-              className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl p-5 shadow-lg"
-            >
-              <Text className="text-white/70 text-xs mb-2">✨ Affirmation du jour</Text>
-              <Text className="text-white text-base font-medium" numberOfLines={3}>
-                {affirmation}
-              </Text>
-            </View>
-          </View>
-        )}
 
         {/* Message de bienvenue pour premier rêve */}
         {dreams.length === 0 && (
