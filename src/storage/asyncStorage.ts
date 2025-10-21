@@ -44,6 +44,21 @@ export const getDreamById = async (id: string): Promise<Dream | null> => {
 };
 
 /**
+ * Récupère tous les tags uniques utilisés dans les rêves
+ */
+export const getAllUsedTags = async (): Promise<string[]> => {
+  try {
+    const dreams = await getDreams();
+    const allTags = dreams.flatMap(dream => dream.tags || []);
+    const uniqueTags = [...new Set(allTags)];
+    return uniqueTags.sort();
+  } catch (error) {
+    console.error('Erreur lors de la récupération des tags:', error);
+    return [];
+  }
+};
+
+/**
  * Sauvegarde un nouveau rêve et met à jour le streak/badges
  */
 export const saveDream = async (dream: Dream): Promise<{ success: boolean; streak?: DreamStreak; newBadges?: string[] }> => {

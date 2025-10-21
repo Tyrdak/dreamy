@@ -3,12 +3,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import * as Haptics from 'expo-haptics';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input, Picker, Slider, TagInput } from '../components';
 import { fetchMoonPhase } from '../services';
-import { saveDream } from '../storage';
+import { getAllUsedTags, saveDream } from '../storage';
 import { Dream, DreamType, EmotionalState, SleepQuality, Tone } from '../types';
 import { generateDreamId } from '../utils';
 
@@ -23,6 +23,7 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
 
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     date: today,
     time: now,
@@ -72,6 +73,16 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
     { label: 'Neutre', value: 'neutre', icon: '➖' },
     { label: 'Négative', value: 'négative', icon: '❌' },
   ];
+
+  // Charge les tags existants au montage
+  useEffect(() => {
+    loadTags();
+  }, []);
+
+  const loadTags = async () => {
+    const tags = await getAllUsedTags();
+    setAvailableTags(tags);
+  };
 
   // Calcul de la progression (seulement champs optionnels/remplis)
   const progress = useMemo(() => {
@@ -164,18 +175,22 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
   };
 
   const SectionHeader: React.FC<{ title: string; subtitle?: string; icon: string }> = ({ title, subtitle, icon }) => (
-    <View className="mb-4">
+    <View className="mb-4 pb-3 border-b border-primary-100 dark:border-primary-900/50">
       <View className="flex-row items-center mb-1">
-        <Text className="text-2xl mr-2">{icon}</Text>
-        <Text className="text-lg font-bold text-dream-night dark:text-dream-cloud">
-          {title}
-        </Text>
+        <View className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full items-center justify-center mr-3">
+          <Text className="text-xl">{icon}</Text>
+        </View>
+        <View className="flex-1">
+          <Text className="text-lg font-bold text-dream-night dark:text-dream-cloud">
+            {title}
+          </Text>
+          {subtitle && (
+            <Text className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
+              {subtitle}
+            </Text>
+          )}
+        </View>
       </View>
-      {subtitle && (
-        <Text className="text-gray-500 dark:text-gray-400 text-sm ml-9">
-          {subtitle}
-        </Text>
-      )}
     </View>
   );
 
@@ -184,25 +199,25 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
       {/* Header */}
       <View 
         style={{ paddingTop: insets.top + 12 }}
-        className="bg-white dark:bg-dream-dusk pb-5 px-6"
+        className="bg-primary-600 pb-5 px-6"
       >
-        <View className="flex-row items-center justify-between mb-3">
+        <View className="flex-row items-center justify-between mb-4">
           <TouchableOpacity 
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               navigation.goBack();
             }}
-            className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 items-center justify-center"
+            className="w-10 h-10 rounded-full bg-white/20 items-center justify-center"
           >
-            <Ionicons name="close" size={20} color="#7c6df1" />
+            <Ionicons name="close" size={22} color="#ffffff" />
           </TouchableOpacity>
           
           <View className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-dream-night dark:text-dream-cloud">
-              Nouveau Rêve
+            <Text className="text-2xl font-bold text-white">
+              ✨ Nouveau Rêve
             </Text>
-            <Text className="text-gray-500 dark:text-gray-400 text-xs">
-              Notez vos rêves pour mieux les comprendre
+            <Text className="text-white/80 text-xs mt-0.5">
+              Capturez vos aventures nocturnes
             </Text>
           </View>
           
@@ -212,16 +227,16 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
         {/* Progress bar */}
         <View className="mt-2">
           <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-gray-600 dark:text-gray-400 text-xs">
-              Progression
+            <Text className="text-white/90 text-xs font-medium">
+              Complété
             </Text>
-            <Text className="text-primary-600 font-bold text-xs">
+            <Text className="text-white font-bold text-xs">
               {progress}%
             </Text>
           </View>
-          <View className="bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+          <View className="bg-white/20 rounded-full h-2.5 overflow-hidden">
             <View 
-              className="bg-primary-600 h-full rounded-full"
+              className="bg-white h-full rounded-full"
               style={{ width: `${progress}%` }}
             />
           </View>
@@ -238,26 +253,46 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
             subtitle="Les détails essentiels"
           />
 
+          <Input
+            label="Titre (optionnel)"
+            value={formData.title}
+            onChangeText={(title) => setFormData({ ...formData, title })}
+            placeholder="Un titre pour vous en souvenir..."
+          />
+
+          <Input
+            label="Description *"
+            value={formData.description}
+            onChangeText={(description) => setFormData({ ...formData, description })}
+            placeholder="Racontez votre rêve en détail... Qu'avez-vous vu, ressenti, vécu ?"
+            multiline
+            rows={6}
+          />
+
           <View className="mb-4">
             <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Date du rêve
+              📅 Date du rêve
             </Text>
             <TouchableOpacity
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowDatePicker(true);
               }}
-              className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl px-4 py-3 flex-row items-center justify-between"
+              className="bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-200 dark:border-primary-800 rounded-2xl px-4 py-3.5 flex-row items-center justify-between"
             >
-              <Text className="text-gray-900 dark:text-gray-100 text-base">
-                {new Date(formData.date).toLocaleDateString('fr-FR', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric'
-                })}
-              </Text>
-              <Ionicons name="calendar-outline" size={20} color="#7c6df1" />
+              <View className="flex-1">
+                <Text className="text-primary-900 dark:text-primary-100 text-base font-medium">
+                  {new Date(formData.date).toLocaleDateString('fr-FR', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}
+                </Text>
+                <Text className="text-primary-600 dark:text-primary-400 text-xs mt-0.5 capitalize">
+                  {new Date(formData.date).toLocaleDateString('fr-FR', { weekday: 'long' })}
+                </Text>
+              </View>
+              <Ionicons name="calendar" size={24} color="#7c6df1" />
             </TouchableOpacity>
             
             {showDatePicker && (
@@ -268,6 +303,7 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
                 onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
                   setShowDatePicker(Platform.OS === 'ios');
                   if (selectedDate) {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     const dateStr = selectedDate.toISOString().split('T')[0];
                     setFormData({ ...formData, date: dateStr });
                   }
@@ -285,22 +321,6 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               setFormData({ ...formData, type: type as DreamType });
             }}
-          />
-
-          <Input
-            label="Titre (optionnel)"
-            value={formData.title}
-            onChangeText={(title) => setFormData({ ...formData, title })}
-            placeholder="Un titre pour vous en souvenir..."
-          />
-
-          <Input
-            label="Description *"
-            value={formData.description}
-            onChangeText={(description) => setFormData({ ...formData, description })}
-            placeholder="Racontez votre rêve en détail... Qu'avez-vous vu, ressenti, vécu ?"
-            multiline
-            rows={6}
           />
         </View>
 
@@ -384,19 +404,58 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
             placeholder="Ajouter un personnage..."
           />
 
-          <TagInput
-            label="Mots-clés"
-            tags={formData.tags}
-            onAddTag={(tag) => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setFormData({ ...formData, tags: [...formData.tags, tag] });
-            }}
-            onRemoveTag={(tag) => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setFormData({ ...formData, tags: formData.tags.filter(t => t !== tag) });
-            }}
-            placeholder="Ex: vol, eau, voyage..."
-          />
+          <View className="mb-4">
+            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              🏷️ Mots-clés
+            </Text>
+            
+            {/* Tags suggérés */}
+            {availableTags.length > 0 && (
+              <View className="mb-3">
+                <Text className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                  Suggestions (cliquez pour ajouter) :
+                </Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {availableTags
+                    .filter(tag => !formData.tags.includes(tag))
+                    .slice(0, 10)
+                    .map((tag) => (
+                      <TouchableOpacity
+                        key={tag}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setFormData({ ...formData, tags: [...formData.tags, tag] });
+                        }}
+                        className="bg-primary-100 dark:bg-primary-900/30 border border-primary-300 dark:border-primary-700 rounded-full px-3 py-1.5"
+                      >
+                        <Text className="text-primary-700 dark:text-primary-300 text-xs font-medium">
+                          + {tag}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                </View>
+              </View>
+            )}
+
+            {/* Input pour nouveau tag */}
+            <TagInput
+              label=""
+              tags={formData.tags}
+              onAddTag={(tag) => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setFormData({ ...formData, tags: [...formData.tags, tag] });
+                // Rafraîchit les tags disponibles
+                if (!availableTags.includes(tag)) {
+                  setAvailableTags([...availableTags, tag].sort());
+                }
+              }}
+              onRemoveTag={(tag) => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setFormData({ ...formData, tags: formData.tags.filter(t => t !== tag) });
+              }}
+              placeholder="Ajouter un nouveau mot-clé..."
+            />
+          </View>
         </View>
 
         {/* Section 4: Analyse */}
@@ -447,18 +506,20 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
               rounded-full py-4 shadow-lg
               ${loading || !formData.description.trim() 
                 ? 'bg-gray-300 dark:bg-gray-700' 
-                : 'bg-primary-600'}
+                : 'bg-primary-600 active:bg-primary-700'}
             `.trim()}
             activeOpacity={0.8}
           >
             <View className="flex-row items-center justify-center">
               {loading ? (
-                <Text className="text-white font-bold text-lg">⏳ Enregistrement...</Text>
+                <>
+                  <Text className="text-white font-bold text-lg">⏳ Enregistrement...</Text>
+                </>
               ) : (
                 <>
-                  <Ionicons name="save" size={24} color="#ffffff" />
+                  <Ionicons name="checkmark-circle" size={26} color="#ffffff" />
                   <Text className="text-white font-bold text-lg ml-2">
-                    Enregistrer le rêve
+                    Enregistrer mon rêve
                   </Text>
                 </>
               )}
