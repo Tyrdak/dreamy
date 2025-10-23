@@ -101,7 +101,7 @@ export const fetchMoonPhaseFromAPI = async (dateString: string): Promise<MoonPha
       throw new Error(`Erreur API: ${response.status}`);
     }
     
-    const data = await response.json();
+    const data = await response.json() as any[];
     
     if (data && data.length > 0) {
       const moonData = data[0];

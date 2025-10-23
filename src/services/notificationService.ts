@@ -1,74 +1,181 @@
-// Service pour gérer les notifications quotidiennes
+// Service de notifications pour iOS et Android
 
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { fetchAffirmation } from './affirmationsApi';
+import { getAffirmation } from './affirmationAPI';
 
-// Configuration du comportement des notifications
+// Configuration des notifications
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
-    shouldSetBadge: false,
+    shouldSetBadge: true,
     shouldShowBanner: true,
     shouldShowList: true,
   }),
 });
 
 /**
- * Demande les permissions de notification
+ * Demande les permissions de notifications
  */
 export const requestNotificationPermissions = async (): Promise<boolean> => {
   try {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
+    const { status } = await Notifications.getPermissionsAsync();
     
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
+    if (status !== 'granted') {
+      const { status: newStatus } = await Notifications.requestPermissionsAsync({
+        ios: {
+          allowAlert: true,
+          allowBadge: true,
+          allowSound: true,
+        },
+      });
+      
+      if (newStatus !== 'granted') return false;
     }
     
-    if (finalStatus !== 'granted') {
-      console.log('Permission de notification refusée');
-      return false;
-    }
-    
-    // Configuration pour Android
+    // Configuration Android
     if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('daily-affirmation', {
-        name: 'Affirmation du matin',
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'Notifications Dreamy',
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#7c6df1',
+        sound: 'default',
+      });
+      
+      await Notifications.setNotificationChannelAsync('lucid-checks', {
+        name: 'Reality Checks',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#fef08a',
+        sound: 'default',
       });
     }
     
     return true;
   } catch (error) {
-    console.error('Erreur lors de la demande de permissions:', error);
     return false;
   }
 };
 
-/**
- * Planifie la notification quotidienne du matin
- */
-export const scheduleDailyMorningNotification = async () => {
+// ===== NOTIFICATION PROGRAMMABLE =====
+
+export const scheduleCustomDailyNotification = async (hour: number, minute: number): Promise<boolean> => {
   try {
-    // Annule toutes les notifications précédentes
-    await Notifications.cancelAllScheduledNotificationsAsync();
+    await Notifications.cancelScheduledNotificationAsync('daily-reminder');
     
-    // Récupère une affirmation pour la notification de demain
-    const affirmation = await fetchAffirmation();
-    
-    // Planifie une notification quotidienne à 8h du matin
     await Notifications.scheduleNotificationAsync({
+      identifier: 'daily-reminder',
       content: {
-        title: '✨ Votre affirmation du jour',
-        body: affirmation,
+        title: '🌙 Dreamy - Rappel',
+        body: 'N\'oubliez pas de noter vos rêves ! Les souvenirs oniriques s\'effacent rapidement.',
+        sound: true,
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+        data: { type: 'daily-reminder' },
+        color: '#7c6df1',
+        badge: 1,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+        hour,
+        minute,
+        repeats: true,
+      },
+    });
+    
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+export const cancelDailyNotification = async (): Promise<boolean> => {
+  try {
+    await Notifications.cancelScheduledNotificationAsync('daily-reminder');
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+// ===== REALITY CHECKS =====
+
+export const scheduleRandomRealityChecks = async (count: number = 5): Promise<boolean> => {
+  try {
+    await cancelRealityChecks();
+    
+    const messages = [
+      'Êtes-vous en train de rêver ? 🌙 Regardez vos mains !',
+      'Reality check ! 👀 Lisez un texte deux fois.',
+      'Vérification : êtes-vous dans un rêve ? 🤔',
+      'Lucidité check ! ✨ Sautez et voyez si vous flottez.',
+      'Moment de conscience ! 🧠 Où étiez-vous il y a 5 minutes ?',
+    ];
+    
+    const schedulePromises = [];
+    for (let i = 0; i < count; i++) {
+      const randomHour = Math.floor(Math.random() * (22 - 8) + 8);
+      const randomMinute = Math.floor(Math.random() * 60);
+      
+      schedulePromises.push(
+        Notifications.scheduleNotificationAsync({
+          identifier: `reality-check-${i}`,
+          content: {
+            title: '✨ Reality Check',
+            body: messages[i % messages.length],
+            sound: true,
+            priority: Notifications.AndroidNotificationPriority.HIGH,
+            data: { type: 'reality-check' },
+            color: '#fef08a',
+            badge: 1,
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+            hour: randomHour,
+            minute: randomMinute,
+            repeats: true,
+          },
+        })
+      );
+    }
+    
+    await Promise.all(schedulePromises);
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+export const cancelRealityChecks = async (): Promise<boolean> => {
+  try {
+    for (let i = 0; i < 10; i++) {
+      await Notifications.cancelScheduledNotificationAsync(`reality-check-${i}`);
+    }
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+// ===== AFFIRMATION DU JOUR =====
+
+export const scheduleDailyQuote = async (): Promise<boolean> => {
+  try {
+    await Notifications.cancelScheduledNotificationAsync('daily-affirmation');
+    
+    const affirmation = await getAffirmation();
+    
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'daily-affirmation',
+      content: {
+        title: '✨ Affirmation du jour',
+        body: String(affirmation),
         sound: true,
         priority: Notifications.AndroidNotificationPriority.HIGH,
         data: { type: 'daily-affirmation' },
+        color: '#a78bfa',
+        badge: 1,
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
@@ -78,54 +185,119 @@ export const scheduleDailyMorningNotification = async () => {
       },
     });
     
-    console.log('Notification quotidienne planifiée à 8h00');
     return true;
   } catch (error) {
-    console.error('Erreur lors de la planification de la notification:', error);
+    return false;
+  }
+};
+
+export const cancelDailyAffirmation = async (): Promise<boolean> => {
+  try {
+    await Notifications.cancelScheduledNotificationAsync('daily-affirmation');
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+// ===== UTILITAIRES =====
+
+export const getAllScheduledNotifications = async () => {
+  try {
+    return await Notifications.getAllScheduledNotificationsAsync();
+  } catch (error) {
+    return [];
+  }
+};
+
+export const cancelAllNotifications = async (): Promise<boolean> => {
+  try {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    return true;
+  } catch (error) {
     return false;
   }
 };
 
 /**
- * Initialise le système de notifications
+ * Envoie une notification de test
  */
-export const initializeNotifications = async (): Promise<boolean> => {
-  const hasPermission = await requestNotificationPermissions();
-  
-  if (hasPermission) {
-    await scheduleDailyMorningNotification();
+export const sendTestNotification = async (type: 'daily' | 'lucid' | 'quote'): Promise<boolean> => {
+  try {
+    const hasPermission = await requestNotificationPermissions();
+    if (!hasPermission) return false;
     
-    // Écoute les notifications reçues (pour rafraîchir l'affirmation dans l'app)
-    Notifications.addNotificationReceivedListener(notification => {
-      console.log('Notification reçue:', notification);
-    });
+    let title = '';
+    let body = '';
     
-    // Écoute les interactions avec les notifications
-    Notifications.addNotificationResponseReceivedListener(response => {
-      console.log('Notification cliquée:', response);
+    switch (type) {
+      case 'daily':
+        title = '🌙 Test - Rappel quotidien';
+        body = 'N\'oubliez pas de noter vos rêves !';
+        break;
+      case 'lucid':
+        title = '✨ Test - Reality Check';
+        body = 'Êtes-vous en train de rêver ? Regardez vos mains !';
+        break;
+      case 'quote':
+        const affirmation = await getAffirmation();
+        console.log('🔍 Test - Affirmation:', affirmation);
+        title = '✨ Test - Affirmation';
+        body = String(affirmation);
+        break;
+    }
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        sound: true,
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+        color: '#a78bfa',
+        badge: 1,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: 2,
+      },
     });
     
     return true;
+  } catch (error) {
+    return false;
   }
-  
-  return false;
 };
 
 /**
- * Envoie une notification de test immédiate
+ * Initialise toutes les notifications
  */
-export const sendTestNotification = async () => {
-  const affirmation = await fetchAffirmation();
-  
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: '✨ Votre affirmation du jour (Test)',
-      body: affirmation,
-      sound: true,
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-      seconds: 2,
-    },
-  });
+export const initializeNotifications = async (settings: {
+  dailyReminderEnabled: boolean;
+  dailyReminderTime: string;
+  lucidModeEnabled: boolean;
+  dailyQuoteEnabled: boolean;
+}): Promise<boolean> => {
+  try {
+    const hasPermission = await requestNotificationPermissions();
+    if (!hasPermission) return false;
+    
+    await cancelAllNotifications();
+    
+    if (settings.dailyReminderEnabled) {
+      const [hour, minute] = settings.dailyReminderTime.split(':').map(Number);
+      await scheduleCustomDailyNotification(hour, minute);
+    }
+    
+    if (settings.lucidModeEnabled) {
+      await scheduleRandomRealityChecks(5);
+    }
+    
+    if (settings.dailyQuoteEnabled) {
+      await scheduleDailyQuote();
+    }
+    
+    return true;
+  } catch (error) {
+    return false;
+  }
 };

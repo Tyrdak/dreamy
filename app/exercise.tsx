@@ -2,13 +2,15 @@
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ExerciseScreen } from '../src/screens';
+import { EXERCISES } from '../src/types';
 
 export default function ExercisePage() {
   const router = useRouter();
   const params = useLocalSearchParams();
   
-  // Récupère l'exercice depuis les params
-  const exercise = params.exercise ? JSON.parse(params.exercise as string) : null;
+  // Récupère l'exercice depuis son ID
+  const exerciseId = Array.isArray(params.exerciseId) ? params.exerciseId[0] : params.exerciseId;
+  const exercise = EXERCISES.find(ex => ex.id === exerciseId);
   
   const navigation = {
     goBack: () => router.back(),

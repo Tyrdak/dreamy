@@ -3,8 +3,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { Dream } from '../types';
-import { formatDreamDate, getDreamSummary, getDreamTypeIcon } from '../utils';
+import { Dream } from '../../types';
+import { formatDreamDate, getDreamSummary, getDreamTypeIcon } from '../../utils';
 
 interface DreamCardProps {
   dream: Dream;

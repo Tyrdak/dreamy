@@ -9,8 +9,8 @@ export default function RitualsPage() {
   const navigation = {
     navigate: (screen: string, params?: any) => {
       if (screen === 'Exercise') {
-        // Encode l'exercice en JSON pour le passer via query params
-        router.push(`/exercise?exercise=${encodeURIComponent(JSON.stringify(params.exercise))}`);
+        // Passe l'exerciseId via query params
+        router.push(`/exercise?exerciseId=${params.exerciseId}`);
       }
     },
     goBack: () => router.back(),

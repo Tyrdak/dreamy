@@ -1,11 +1,11 @@
 // Écran de liste des rêves avec recherche et filtres
-
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Modal, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, DreamCard, TagChip } from '../components';
+import { Button, DreamCard } from '../components';
+import { FilterButton, FilterModal, SearchBar } from '../components/list';
 import { getDreams } from '../storage';
 import { Dream, DreamFilters, DreamType, Tone } from '../types';
 import { filterDreams, sortDreamsByDate } from '../utils';
@@ -23,35 +23,24 @@ export const ListScreen: React.FC<ListScreenProps> = ({ navigation }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<DreamFilters>({});
 
-  // Charge les rêves
   const loadDreams = async () => {
     const loadedDreams = await getDreams();
-    const sortedDreams = sortDreamsByDate(loadedDreams);
-    setDreams(sortedDreams);
+    setDreams(sortDreamsByDate(loadedDreams));
   };
 
-  // Rafraîchissement
   const onRefresh = async () => {
     setRefreshing(true);
     await loadDreams();
     setRefreshing(false);
   };
 
-  // Charge les rêves au focus de l'écran
-  useFocusEffect(
-    useCallback(() => {
-      loadDreams();
-    }, [])
-  );
+  useFocusEffect(useCallback(() => { loadDreams(); }, []));
 
-  // Applique les filtres
   useEffect(() => {
     const currentFilters = { ...filters, searchQuery };
-    const filtered = filterDreams(dreams, currentFilters);
-    setFilteredDreams(filtered);
+    setFilteredDreams(filterDreams(dreams, currentFilters));
   }, [dreams, filters, searchQuery]);
 
-  // Gestion des filtres
   const toggleTypeFilter = (type: DreamType) => {
     const currentTypes = filters.type || [];
     const newTypes = currentTypes.includes(type)
@@ -68,6 +57,22 @@ export const ListScreen: React.FC<ListScreenProps> = ({ navigation }) => {
     setFilters({ ...filters, tone: newTones.length > 0 ? newTones : undefined });
   };
 
+  const toggleTagFilter = (tag: string) => {
+    const currentTags = filters.tags || [];
+    const newTags = currentTags.includes(tag)
+      ? currentTags.filter(t => t !== tag)
+      : [...currentTags, tag];
+    setFilters({ ...filters, tags: newTags.length > 0 ? newTags : undefined });
+  };
+
+  const toggleCharacterFilter = (character: string) => {
+    const currentCharacters = filters.characters || [];
+    const newCharacters = currentCharacters.includes(character)
+      ? currentCharacters.filter(c => c !== character)
+      : [...currentCharacters, character];
+    setFilters({ ...filters, characters: newCharacters.length > 0 ? newCharacters : undefined });
+  };
+
   const clearFilters = () => {
     setFilters({});
     setSearchQuery('');
@@ -76,15 +81,23 @@ export const ListScreen: React.FC<ListScreenProps> = ({ navigation }) => {
   const activeFiltersCount = 
     (filters.type?.length || 0) +
     (filters.tone?.length || 0) +
+    (filters.tags?.length || 0) +
+    (filters.characters?.length || 0) +
     (searchQuery ? 1 : 0);
+
+  const getAllTags = () => {
+    const allTags = dreams.flatMap(dream => dream.tags);
+    return [...new Set(allTags)].sort();
+  };
+
+  const getAllCharacters = () => {
+    const allCharacters = dreams.flatMap(dream => dream.characters);
+    return [...new Set(allCharacters)].sort();
+  };
 
   return (
     <View className="flex-1 bg-dream-cloud dark:bg-dream-night">
-      {/* Header */}
-      <View 
-        style={{ paddingTop: insets.top + 12 }}
-        className="bg-white dark:bg-dream-dusk pb-4 px-6 border-b border-gray-200 dark:border-dream-purple shadow-sm"
-      >
+      <View style={{ paddingTop: insets.top + 12 }} className="bg-white dark:bg-dream-dusk pb-4 px-6 border-b border-gray-200 dark:border-dream-purple shadow-sm">
         <View className="flex-row justify-between items-center mb-5">
           <Text className="text-2xl font-bold text-dream-night dark:text-dream-cloud">
             Tous mes rêves
@@ -93,47 +106,19 @@ export const ListScreen: React.FC<ListScreenProps> = ({ navigation }) => {
             {dreams.length} {dreams.length <= 1 ? 'rêve' : 'rêves'}
           </Text>
         </View>
-
-        {/* Search Bar */}
         <View className="flex-row items-center gap-3">
-          <View className="flex-1 flex-row items-center bg-gray-100 dark:bg-dream-night rounded-2xl px-4 h-14">
-            <Ionicons name="search" size={22} color="#9ca3af" />
-            <TextInput
-              className="flex-1 ml-3 text-dream-night dark:text-dream-cloud text-base"
-              placeholder="Chercher dans mes rêves..."
-              placeholderTextColor="#9ca3af"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={22} color="#9ca3af" />
-              </TouchableOpacity>
-            )}
-          </View>
-          
-          <TouchableOpacity
+          <SearchBar
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onClear={() => setSearchQuery('')}
+          />
+          <FilterButton
+            activeFiltersCount={activeFiltersCount}
             onPress={() => setShowFilters(true)}
-            className={`
-              ${activeFiltersCount > 0 ? 'bg-primary-600' : 'bg-gray-100 dark:bg-dream-night'}
-              rounded-2xl w-14 h-14 items-center justify-center
-            `.trim()}
-          >
-            <Ionicons
-              name="options-outline"
-              size={26}
-              color={activeFiltersCount > 0 ? '#ffffff' : '#7c6df1'}
-            />
-            {activeFiltersCount > 0 && (
-              <View className="absolute -top-1 -right-1 bg-primary-600 rounded-full w-6 h-6 items-center justify-center border-2 border-white">
-                <Text className="text-white text-xs font-bold">{activeFiltersCount}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          />
         </View>
       </View>
 
-      {/* Dreams List */}
       {filteredDreams.length === 0 ? (
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 }}
@@ -146,7 +131,7 @@ export const ListScreen: React.FC<ListScreenProps> = ({ navigation }) => {
           <Text className="text-gray-600 dark:text-gray-400 text-center text-base leading-6 mb-8">
             {dreams.length === 0
               ? "Commencez à noter vos rêves pour les retrouver ici"
-              : "Aucun rêve ne correspond à votre recherche. Essayez d'autres mots-clés !"}
+              : "Aucun rêve ne correspond à votre recherche"}
           </Text>
           {dreams.length === 0 && (
             <Button
@@ -169,115 +154,32 @@ export const ListScreen: React.FC<ListScreenProps> = ({ navigation }) => {
               onPress={() => navigation.navigate('DreamDetails', { dreamId: dream.id })}
             />
           ))}
-          
           <View className="h-24" />
         </ScrollView>
       )}
 
-      {/* Floating Add Button */}
       <TouchableOpacity
         onPress={() => navigation.navigate('AddDream')}
         className="absolute bottom-8 right-6 bg-primary-600 rounded-full w-16 h-16 items-center justify-center shadow-2xl"
         activeOpacity={0.7}
-        style={{
-          shadowColor: '#7c6df1',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.4,
-          shadowRadius: 8,
-          elevation: 8,
-        }}
       >
         <Ionicons name="add" size={34} color="#ffffff" />
       </TouchableOpacity>
 
-      {/* Filters Modal */}
-      <Modal
+      <FilterModal
         visible={showFilters}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowFilters(false)}
-      >
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="bg-white dark:bg-dream-dusk rounded-t-3xl max-h-[80%]">
-            {/* Modal Header */}
-            <View className="p-6 border-b border-gray-200 dark:border-dream-purple">
-              <View className="flex-row justify-between items-center mb-2">
-                <Text className="text-2xl font-bold text-dream-night dark:text-dream-cloud">
-                  Filtrer mes rêves
-                </Text>
-                <TouchableOpacity onPress={() => setShowFilters(false)}>
-                  <Ionicons name="close-circle" size={32} color="#9ca3af" />
-                </TouchableOpacity>
-              </View>
-              <Text className="text-gray-600 dark:text-gray-400 text-sm">
-                Affinez votre recherche pour retrouver vos rêves plus facilement
-              </Text>
-              {activeFiltersCount > 0 && (
-                <TouchableOpacity onPress={clearFilters} className="mt-3 self-start">
-                  <Text className="text-primary-600 font-semibold text-sm">
-                    ✕ Tout réinitialiser
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <ScrollView className="p-6">
-              {/* Type de rêve */}
-              <View className="mb-6">
-                <Text className="text-dream-night dark:text-dream-cloud font-bold text-lg mb-2">
-                  Quel type de rêve ?
-                </Text>
-                <Text className="text-gray-500 dark:text-gray-400 text-sm mb-3">
-                  Sélectionnez un ou plusieurs types
-                </Text>
-                <View className="flex-row flex-wrap">
-                  {(['cauchemar', 'lucide', 'ordinaire', 'récurrent', 'prémonitoire'] as DreamType[]).map((type) => (
-                    <TagChip
-                      key={type}
-                      label={type}
-                      selected={filters.type?.includes(type)}
-                      onPress={() => toggleTypeFilter(type)}
-                    />
-                  ))}
-                </View>
-              </View>
-
-              {/* Tonalité */}
-              <View className="mb-6">
-                <Text className="text-dream-night dark:text-dream-cloud font-bold text-lg mb-2">
-                  Quelle ambiance ?
-                </Text>
-                <Text className="text-gray-500 dark:text-gray-400 text-sm mb-3">
-                  Filtrez par tonalité émotionnelle
-                </Text>
-                <View className="flex-row flex-wrap">
-                  {(['positive', 'neutre', 'négative'] as Tone[]).map((tone) => (
-                    <TagChip
-                      key={tone}
-                      label={tone}
-                      selected={filters.tone?.includes(tone)}
-                      onPress={() => toggleToneFilter(tone)}
-                    />
-                  ))}
-                </View>
-              </View>
-
-              <View className="h-20" />
-            </ScrollView>
-
-            {/* Apply Button */}
-            <View className="p-6 border-t border-gray-200 dark:border-dream-purple">
-              <Button
-                title={activeFiltersCount > 0 ? `Voir les résultats (${filteredDreams.length})` : 'Fermer'}
-                onPress={() => setShowFilters(false)}
-                variant="primary"
-                fullWidth
-              />
-            </View>
-          </View>
-        </View>
-      </Modal>
+        filters={filters}
+        activeFiltersCount={activeFiltersCount}
+        filteredDreamsCount={filteredDreams.length}
+        allTags={getAllTags()}
+        allCharacters={getAllCharacters()}
+        onClose={() => setShowFilters(false)}
+        onToggleType={toggleTypeFilter}
+        onToggleTone={toggleToneFilter}
+        onToggleTag={toggleTagFilter}
+        onToggleCharacter={toggleCharacterFilter}
+        onClear={clearFilters}
+      />
     </View>
   );
 };
-

@@ -7,7 +7,7 @@ import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import "../global.css";
 import { initializeNotifications } from '../src/services';
-import { hasCompletedOnboarding } from '../src/storage';
+import { getSettings, hasCompletedOnboarding } from '../src/storage';
 
 export default function RootLayout() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     checkOnboarding();
-    initializeNotifications();
+    setupNotifications();
   }, []);
 
   const checkOnboarding = async () => {
@@ -29,6 +29,16 @@ export default function RootLayout() {
     ) {
       router.replace('/welcome');
     }
+  };
+
+  const setupNotifications = async () => {
+    const settings = await getSettings();
+    await initializeNotifications({
+      dailyReminderEnabled: settings.notificationsEnabled,
+      dailyReminderTime: settings.notificationTime,
+      lucidModeEnabled: settings.lucidModeEnabled,
+      dailyQuoteEnabled: settings.dailyQuoteEnabled,
+    });
   };
 
   return (
