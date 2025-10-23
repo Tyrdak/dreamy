@@ -1,12 +1,10 @@
 // Écran d'ajout de rêve avec formulaire complet
-
-import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Input, Picker, Slider, TagInput } from '../components';
+import { Button } from '../components';
+import { BasicInfoSection, DetailsSection, EmotionsSection, FormHeader } from '../components/add-dream';
 import { fetchMoonPhase } from '../services';
 import { getAllUsedTags, saveDream } from '../storage';
 import { Dream, DreamType, EmotionalState, SleepQuality, Tone } from '../types';
@@ -74,34 +72,22 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
     { label: 'Négative', value: 'négative', icon: '❌' },
   ];
 
-  // Charge les tags existants au montage
   useEffect(() => {
-    loadTags();
+    getAllUsedTags().then(setAvailableTags);
   }, []);
 
-  const loadTags = async () => {
-    const tags = await getAllUsedTags();
-    setAvailableTags(tags);
-  };
-
-  // Calcul de la progression (seulement champs optionnels/remplis)
   const progress = useMemo(() => {
     let count = 0;
-    let total = 6;
-    
-    // Champs obligatoires/importants
     if (formData.description.trim()) count++;
     if (formData.title.trim()) count++;
     if (formData.location.trim()) count++;
     if (formData.characters.length > 0) count++;
     if (formData.tags.length > 0) count++;
     if (formData.personalMeaning.trim()) count++;
-    
-    return Math.round((count / total) * 100);
+    return Math.round((count / 6) * 100);
   }, [formData]);
 
   const handleSubmit = async () => {
-    // Validation
     if (!formData.description.trim()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Erreur', 'Veuillez décrire votre rêve');
@@ -112,61 +98,32 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
     setLoading(true);
 
     try {
-      // Récupère la phase lunaire
       const moonPhaseData = await fetchMoonPhase(formData.date);
-
-      // Crée le rêve
       const newDream: Dream = {
         id: generateDreamId(),
-        date: formData.date,
-        time: formData.time,
-        type: formData.type,
-        title: formData.title,
-        description: formData.description,
-        emotionalStateBefore: formData.emotionalStateBefore,
-        emotionalStateAfter: formData.emotionalStateAfter,
-        emotionalIntensity: formData.emotionalIntensity,
-        characters: formData.characters,
-        location: formData.location,
-        clarity: formData.clarity,
-        tags: formData.tags,
-        sleepQuality: formData.sleepQuality,
-        personalMeaning: formData.personalMeaning,
-        tone: formData.tone,
+        ...formData,
         moonPhase: moonPhaseData.phaseName as any,
         moonPhaseEmoji: moonPhaseData.emoji,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
 
-      // Sauvegarde
       const result = await saveDream(newDream);
 
       if (result.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        
-        // Message de succès avec streak
         let message = 'Votre rêve a été enregistré !';
-        
         if (result.streak && result.streak.currentStreak > 1) {
           message += `\n\n🔥 Série de ${result.streak.currentStreak} jours !`;
         }
-        
         if (result.newBadges && result.newBadges.length > 0) {
           message += '\n\n🏆 Nouveau badge débloqué !';
         }
-
-        Alert.alert('✨ Félicitations', message, [
-          {
-            text: 'Super !',
-            onPress: () => navigation.goBack(),
-          },
-        ]);
+        Alert.alert('✨ Félicitations', message, [{ text: 'Super !', onPress: () => navigation.goBack() }]);
       } else {
         throw new Error('Échec de la sauvegarde');
       }
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Erreur', 'Impossible d\'enregistrer le rêve. Réessayez.');
     } finally {
@@ -174,380 +131,64 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
     }
   };
 
-  const SectionHeader: React.FC<{ title: string; subtitle?: string; icon: string }> = ({ title, subtitle, icon }) => (
-    <View className="mb-4 pb-3" style={{ borderBottomWidth: 1, borderBottomColor: '#a78bfa30' }}>
-      <View className="flex-row items-center mb-1">
-        <View className="w-10 h-10 rounded-full items-center justify-center mr-3" style={{ backgroundColor: '#a78bfa20' }}>
-          <Text className="text-xl">{icon}</Text>
-        </View>
-        <View className="flex-1">
-          <Text className="text-lg font-bold text-dream-night dark:text-dream-cloud">
-            {title}
-          </Text>
-          {subtitle && (
-            <Text style={{ color: '#a78bfa' }} className="text-xs mt-0.5">
-              {subtitle}
-            </Text>
-          )}
-        </View>
-      </View>
-    </View>
-  );
-
   return (
     <View className="flex-1 bg-dream-cloud dark:bg-dream-night">
-      {/* Header */}
-      <View 
-        style={{ paddingTop: insets.top + 12, backgroundColor: '#312e81' }}
-        className="pb-5 px-6"
-      >
-        <View className="flex-row items-center justify-between mb-4">
-          <TouchableOpacity 
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              navigation.goBack();
-            }}
-            className="w-10 h-10 rounded-full bg-white/10 items-center justify-center"
-          >
-            <Ionicons name="close" size={22} color="#fef08a" />
-          </TouchableOpacity>
-          
-          <View className="flex-1 items-center">
-            <Text className="text-2xl font-bold" style={{ color: '#fef08a' }}>
-              ✨ Nouveau Rêve
-            </Text>
-            <Text style={{ color: '#a78bfa' }} className="text-xs mt-0.5">
-              Capturez vos aventures nocturnes
-            </Text>
-          </View>
-          
-          <View style={{ width: 40 }} />
-        </View>
+      <FormHeader progress={progress} onClose={() => navigation.goBack()} topInset={insets.top} />
 
-        {/* Progress bar */}
-        <View className="mt-2">
-          <View className="flex-row items-center justify-between mb-2">
-            <Text style={{ color: '#a78bfa' }} className="text-xs font-medium">
-              Complété
-            </Text>
-            <Text style={{ color: '#fef08a' }} className="font-bold text-xs">
-              {progress}%
-            </Text>
-          </View>
-          <View className="bg-white/10 rounded-full h-2.5 overflow-hidden">
-            <View 
-              style={{ width: `${progress}%`, backgroundColor: '#fef08a' }}
-              className="h-full rounded-full"
-            />
-          </View>
-        </View>
-      </View>
-
-      {/* Form */}
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Section 1: Informations de base */}
-        <View className="bg-white dark:bg-dream-dusk mx-4 mt-5 rounded-3xl p-5 shadow-sm">
-          <SectionHeader 
-            icon="✍️" 
-            title="Racontez votre rêve" 
-            subtitle="Les détails essentiels"
-          />
+        <BasicInfoSection
+          title={formData.title}
+          description={formData.description}
+          date={formData.date}
+          type={formData.type}
+          showDatePicker={showDatePicker}
+          dreamTypeOptions={dreamTypeOptions}
+          onTitleChange={(title) => setFormData({ ...formData, title })}
+          onDescriptionChange={(description) => setFormData({ ...formData, description })}
+          onDateChange={(date) => setFormData({ ...formData, date })}
+          onTypeChange={(type) => setFormData({ ...formData, type })}
+          onToggleDatePicker={setShowDatePicker}
+        />
 
-          <Input
-            label="Titre (optionnel)"
-            value={formData.title}
-            onChangeText={(title) => setFormData({ ...formData, title })}
-            placeholder="Un titre pour vous en souvenir..."
-          />
+        <EmotionsSection
+          emotionalStateBefore={formData.emotionalStateBefore}
+          emotionalStateAfter={formData.emotionalStateAfter}
+          emotionalIntensity={formData.emotionalIntensity}
+          emotionalStateOptions={emotionalStateOptions}
+          onEmotionalStateBeforeChange={(state) => setFormData({ ...formData, emotionalStateBefore: state })}
+          onEmotionalStateAfterChange={(state) => setFormData({ ...formData, emotionalStateAfter: state })}
+          onEmotionalIntensityChange={(intensity) => setFormData({ ...formData, emotionalIntensity: intensity })}
+        />
 
-          <Input
-            label="Description *"
-            value={formData.description}
-            onChangeText={(description) => setFormData({ ...formData, description })}
-            placeholder="Racontez votre rêve en détail... Qu'avez-vous vu, ressenti, vécu ?"
-            multiline
-            rows={6}
-          />
+        <DetailsSection
+          clarity={formData.clarity}
+          location={formData.location}
+          characters={formData.characters}
+          tags={formData.tags}
+          sleepQuality={formData.sleepQuality}
+          personalMeaning={formData.personalMeaning}
+          tone={formData.tone}
+          sleepQualityOptions={sleepQualityOptions}
+          toneOptions={toneOptions}
+          onClarityChange={(clarity) => setFormData({ ...formData, clarity })}
+          onLocationChange={(location) => setFormData({ ...formData, location })}
+          onCharactersChange={(characters) => setFormData({ ...formData, characters })}
+          onTagsChange={(tags) => setFormData({ ...formData, tags })}
+          onSleepQualityChange={(quality) => setFormData({ ...formData, sleepQuality: quality })}
+          onPersonalMeaningChange={(meaning) => setFormData({ ...formData, personalMeaning: meaning })}
+          onToneChange={(tone) => setFormData({ ...formData, tone })}
+        />
 
-          <View className="mb-4">
-            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              📅 Date du rêve
-            </Text>
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowDatePicker(true);
-              }}
-              className="rounded-2xl px-4 py-3.5 flex-row items-center justify-between"
-              style={{ 
-                backgroundColor: '#fef08a15',
-                borderWidth: 2,
-                borderColor: '#fef08a'
-              }}
-            >
-              <View className="flex-1">
-                <Text className="text-base font-medium" style={{ color: '#312e81' }}>
-                  {new Date(formData.date).toLocaleDateString('fr-FR', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                  })}
-                </Text>
-                <Text className="text-xs mt-0.5 capitalize" style={{ color: '#a78bfa' }}>
-                  {new Date(formData.date).toLocaleDateString('fr-FR', { weekday: 'long' })}
-                </Text>
-              </View>
-              <Ionicons name="calendar" size={24} color="#fef08a" />
-            </TouchableOpacity>
-            
-            {showDatePicker && (
-              <DateTimePicker
-                value={new Date(formData.date)}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
-                  setShowDatePicker(Platform.OS === 'ios');
-                  if (selectedDate) {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    const dateStr = selectedDate.toISOString().split('T')[0];
-                    setFormData({ ...formData, date: dateStr });
-                  }
-                }}
-                maximumDate={new Date()}
-              />
-            )}
-          </View>
-
-          <Picker
-            label="Type de rêve"
-            value={formData.type}
-            options={dreamTypeOptions}
-            onValueChange={(type) => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setFormData({ ...formData, type: type as DreamType });
-            }}
-          />
-        </View>
-
-        {/* Section 2: Émotions */}
-        <View className="bg-white dark:bg-dream-dusk mx-4 mt-4 rounded-3xl p-5 shadow-sm">
-          <SectionHeader 
-            icon="💭" 
-            title="Vos émotions" 
-            subtitle="Avant, pendant et après"
-          />
-
-          <Picker
-            label="Avant le sommeil"
-            value={formData.emotionalStateBefore}
-            options={emotionalStateOptions}
-            onValueChange={(state) => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setFormData({ ...formData, emotionalStateBefore: state as EmotionalState });
-            }}
-          />
-
-          <Picker
-            label="Au réveil"
-            value={formData.emotionalStateAfter}
-            options={emotionalStateOptions}
-            onValueChange={(state) => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setFormData({ ...formData, emotionalStateAfter: state as EmotionalState });
-            }}
-          />
-
-          <Slider
-            label="Intensité émotionnelle"
-            value={formData.emotionalIntensity}
-            onValueChange={(intensity) => setFormData({ ...formData, emotionalIntensity: intensity })}
-            minimumValue={1}
-            maximumValue={10}
-            step={1}
-            leftLabel="Faible"
-            rightLabel="Intense"
-          />
-        </View>
-
-        {/* Section 3: Détails du rêve */}
-        <View className="bg-white dark:bg-dream-dusk mx-4 mt-4 rounded-3xl p-5 shadow-sm">
-          <SectionHeader 
-            icon="🌟" 
-            title="Détails & Contexte" 
-            subtitle="Enrichissez votre souvenir"
-          />
-
-          <Slider
-            label="Clarté du rêve"
-            value={formData.clarity}
-            onValueChange={(clarity) => setFormData({ ...formData, clarity })}
-            minimumValue={1}
-            maximumValue={10}
-            step={1}
-            leftLabel="Flou"
-            rightLabel="Net"
-          />
-
-          <Input
-            label="Lieu du rêve"
-            value={formData.location}
-            onChangeText={(location) => setFormData({ ...formData, location })}
-            placeholder="Ex: Une forêt enchantée, ma maison d'enfance..."
-          />
-
-          <TagInput
-            label="Personnages présents"
-            tags={formData.characters}
-            onAddTag={(character) => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setFormData({ ...formData, characters: [...formData.characters, character] });
-            }}
-            onRemoveTag={(character) => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setFormData({ ...formData, characters: formData.characters.filter(c => c !== character) });
-            }}
-            placeholder="Ajouter un personnage..."
-          />
-
-          <View className="mb-4">
-            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              🏷️ Mots-clés
-            </Text>
-            
-            {/* Tags suggérés */}
-            {availableTags.length > 0 && (
-              <View className="mb-3">
-                <Text className="text-xs mb-2" style={{ color: '#a78bfa' }}>
-                  💡 Suggestions (cliquez pour ajouter) :
-                </Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {availableTags
-                    .filter(tag => !formData.tags.includes(tag))
-                    .slice(0, 10)
-                    .map((tag) => (
-                      <TouchableOpacity
-                        key={tag}
-                        onPress={() => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          setFormData({ ...formData, tags: [...formData.tags, tag] });
-                        }}
-                        className="rounded-full px-3 py-1.5"
-                        style={{ 
-                          backgroundColor: '#a78bfa20',
-                          borderWidth: 1,
-                          borderColor: '#a78bfa'
-                        }}
-                      >
-                        <Text className="text-xs font-medium" style={{ color: '#312e81' }}>
-                          + {tag}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                </View>
-              </View>
-            )}
-
-            {/* Input pour nouveau tag */}
-            <TagInput
-              label=""
-              tags={formData.tags}
-              onAddTag={(tag) => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setFormData({ ...formData, tags: [...formData.tags, tag] });
-                // Rafraîchit les tags disponibles
-                if (!availableTags.includes(tag)) {
-                  setAvailableTags([...availableTags, tag].sort());
-                }
-              }}
-              onRemoveTag={(tag) => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setFormData({ ...formData, tags: formData.tags.filter(t => t !== tag) });
-              }}
-              placeholder="Ajouter un nouveau mot-clé..."
-            />
-          </View>
-        </View>
-
-        {/* Section 4: Analyse */}
-        <View className="bg-white dark:bg-dream-dusk mx-4 mt-4 rounded-3xl p-5 shadow-sm">
-
-          <SectionHeader 
-            icon="🔍" 
-            title="Analyse" 
-            subtitle="Pour mieux comprendre"
-          />
-
-          <Picker
-            label="Qualité du sommeil"
-            value={formData.sleepQuality}
-            options={sleepQualityOptions}
-            onValueChange={(quality) => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setFormData({ ...formData, sleepQuality: quality as SleepQuality });
-            }}
-          />
-
-          <Picker
-            label="Tonalité globale"
-            value={formData.tone}
-            options={toneOptions}
-            onValueChange={(tone) => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setFormData({ ...formData, tone: tone as Tone });
-            }}
-          />
-
-          <Input
-            label="Signification personnelle"
-            value={formData.personalMeaning}
-            onChangeText={(meaning) => setFormData({ ...formData, personalMeaning: meaning })}
-            placeholder="Que représente ce rêve pour vous ? Quelle interprétation lui donnez-vous ?"
-            multiline
-            rows={4}
-          />
-        </View>
-
-        {/* Submit Button */}
         <View className="px-4 mt-6 mb-8">
-          <TouchableOpacity
+          <Button
+            title={loading ? "Enregistrement..." : "✨ Enregistrer mon rêve"}
             onPress={handleSubmit}
-            disabled={loading || !formData.description.trim()}
-            className="rounded-full py-4 shadow-lg"
-            style={{
-              backgroundColor: loading || !formData.description.trim() 
-                ? '#d1d5db' 
-                : '#312e81'
-            }}
-            activeOpacity={0.8}
-          >
-            <View className="flex-row items-center justify-center">
-              {loading ? (
-                <>
-                  <Text className="font-bold text-lg" style={{ color: '#a78bfa' }}>
-                    ⏳ Enregistrement...
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Ionicons name="checkmark-circle" size={26} color="#fef08a" />
-                  <Text className="font-bold text-lg ml-2" style={{ color: '#fef08a' }}>
-                    Enregistrer mon rêve
-                  </Text>
-                </>
-              )}
-            </View>
-          </TouchableOpacity>
-          
-          {!formData.description.trim() && (
-            <Text className="text-center text-sm mt-3" style={{ color: '#a78bfa' }}>
-              ℹ️ La description est obligatoire
-            </Text>
-          )}
+            variant="primary"
+            fullWidth
+            disabled={loading}
+          />
         </View>
-
-        <View className="h-12" />
       </ScrollView>
     </View>
   );
 };
-

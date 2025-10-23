@@ -1,7 +1,7 @@
 // Layout des onglets avec bottom navigation animée
 
 import { Tabs } from 'expo-router';
-import { AnimatedTabBar } from '../../src/components/AnimatedTabBar';
+import { AnimatedTabBar } from '../../src/components/ui/AnimatedTabBar';
 
 export default function TabLayout() {
   return (

@@ -10,8 +10,7 @@ export default function DreamDetailsPage() {
   const navigation = {
     navigate: (screen: string, routeParams?: any) => {
       if (screen === 'EditDream') {
-        // TODO: Créer EditDreamScreen
-        console.log('Edit dream not implemented yet');
+        router.push(`/edit-dream?dreamId=${routeParams.dreamId}`);
       }
     },
     goBack: () => router.back(),

@@ -5,6 +5,7 @@ export * from './BadgesScreen';
 export * from './CalendarScreen';
 export * from './ConstellationScreen';
 export * from './DreamDetailsScreen';
+export * from './EditDreamScreen';
 export * from './ExerciseScreen';
 export * from './HomeScreen';
 export * from './InsightsScreen';
