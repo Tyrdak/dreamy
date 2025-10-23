@@ -68,6 +68,22 @@ export const ListScreen: React.FC<ListScreenProps> = ({ navigation }) => {
     setFilters({ ...filters, tone: newTones.length > 0 ? newTones : undefined });
   };
 
+  const toggleTagFilter = (tag: string) => {
+    const currentTags = filters.tags || [];
+    const newTags = currentTags.includes(tag)
+      ? currentTags.filter(t => t !== tag)
+      : [...currentTags, tag];
+    setFilters({ ...filters, tags: newTags.length > 0 ? newTags : undefined });
+  };
+
+  const toggleCharacterFilter = (character: string) => {
+    const currentCharacters = filters.characters || [];
+    const newCharacters = currentCharacters.includes(character)
+      ? currentCharacters.filter(c => c !== character)
+      : [...currentCharacters, character];
+    setFilters({ ...filters, characters: newCharacters.length > 0 ? newCharacters : undefined });
+  };
+
   const clearFilters = () => {
     setFilters({});
     setSearchQuery('');
@@ -76,7 +92,20 @@ export const ListScreen: React.FC<ListScreenProps> = ({ navigation }) => {
   const activeFiltersCount = 
     (filters.type?.length || 0) +
     (filters.tone?.length || 0) +
+    (filters.tags?.length || 0) +
+    (filters.characters?.length || 0) +
     (searchQuery ? 1 : 0);
+
+  // Obtenir les tags et personnages uniques des rêves
+  const getAllTags = () => {
+    const allTags = dreams.flatMap(dream => dream.tags);
+    return [...new Set(allTags)].sort();
+  };
+
+  const getAllCharacters = () => {
+    const allCharacters = dreams.flatMap(dream => dream.characters);
+    return [...new Set(allCharacters)].sort();
+  };
 
   return (
     <View className="flex-1 bg-dream-cloud dark:bg-dream-night">
@@ -261,6 +290,50 @@ export const ListScreen: React.FC<ListScreenProps> = ({ navigation }) => {
                   ))}
                 </View>
               </View>
+
+              {/* Tags */}
+              {getAllTags().length > 0 && (
+                <View className="mb-6">
+                  <Text className="text-dream-night dark:text-dream-cloud font-bold text-lg mb-2">
+                    Mots-clés
+                  </Text>
+                  <Text className="text-gray-500 dark:text-gray-400 text-sm mb-3">
+                    Filtrez par tags associés à vos rêves
+                  </Text>
+                  <View className="flex-row flex-wrap">
+                    {getAllTags().map((tag) => (
+                      <TagChip
+                        key={tag}
+                        label={tag}
+                        selected={filters.tags?.includes(tag)}
+                        onPress={() => toggleTagFilter(tag)}
+                      />
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Personnages */}
+              {getAllCharacters().length > 0 && (
+                <View className="mb-6">
+                  <Text className="text-dream-night dark:text-dream-cloud font-bold text-lg mb-2">
+                    Personnages
+                  </Text>
+                  <Text className="text-gray-500 dark:text-gray-400 text-sm mb-3">
+                    Filtrez par personnes présentes dans vos rêves
+                  </Text>
+                  <View className="flex-row flex-wrap">
+                    {getAllCharacters().map((character) => (
+                      <TagChip
+                        key={character}
+                        label={character}
+                        selected={filters.characters?.includes(character)}
+                        onPress={() => toggleCharacterFilter(character)}
+                      />
+                    ))}
+                  </View>
+                </View>
+              )}
 
               <View className="h-20" />
             </ScrollView>

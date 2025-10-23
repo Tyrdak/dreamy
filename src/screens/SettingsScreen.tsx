@@ -605,6 +605,36 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
           </View>
         </View>
 
+        {/* Test (Debug) */}
+        <SectionHeader icon="🧪" title="Tests & Debug" />
+        <View className="px-6">
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              navigation.navigate('Test');
+            }}
+            className="bg-white dark:bg-dream-dusk rounded-3xl p-4 shadow-sm flex-row items-center justify-between"
+          >
+            <View className="flex-row items-center flex-1">
+              <View 
+                className="w-10 h-10 rounded-full items-center justify-center mr-3"
+                style={{ backgroundColor: '#312e81' }}
+              >
+                <Ionicons name="flask" size={20} color="#fef08a" />
+              </View>
+              <View>
+                <Text className="text-dream-night dark:text-dream-cloud font-semibold">
+                  Page de test
+                </Text>
+                <Text style={{ color: '#a78bfa' }} className="text-xs">
+                  Tester l'API et les notifications
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#a78bfa" />
+          </TouchableOpacity>
+        </View>
+
         {/* À propos */}
         <SectionHeader icon="ℹ️" title="À propos" />
         <View className="px-6 mb-8">

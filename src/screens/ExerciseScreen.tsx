@@ -31,7 +31,7 @@ export const ExerciseScreen: React.FC<ExerciseScreenProps> = ({ navigation, rout
   const opacity = useSharedValue(0.3);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: any;
 
     if (isRunning && countdown > 0) {
       interval = setInterval(() => {
