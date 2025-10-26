@@ -536,16 +536,16 @@ export const saveRitualsData = async (data: RitualsData): Promise<boolean> => {
 };
 
 /**
- * Met à jour la citation du jour
+ * Met à jour l'affirmation du jour
  */
-export const updateDailyQuote = async (quote: any): Promise<boolean> => {
+export const updateDailyAffirmation = async (affirmation: string): Promise<boolean> => {
   try {
     const rituals = await getRitualsData();
-    rituals.dailyQuote = quote;
-    rituals.lastQuoteDate = new Date().toISOString();
+    rituals.dailyAffirmation = affirmation;
+    rituals.lastAffirmationDate = new Date().toISOString();
     return await saveRitualsData(rituals);
   } catch (error) {
-    console.error('Erreur lors de la mise à jour de la citation:', error);
+    console.error('Erreur lors de la mise à jour de l\'affirmation:', error);
     return false;
   }
 };

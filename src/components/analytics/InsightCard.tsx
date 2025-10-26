@@ -1,4 +1,4 @@
-// Carte d'insight personnalisé
+// Carte d'insight personnalisé améliorée
 import React from 'react';
 import { Text, View } from 'react-native';
 
@@ -22,14 +22,16 @@ export const InsightCard: React.FC<InsightCardProps> = ({
   textColor,
 }) => {
   return (
-    <View className={`${gradientFrom} ${gradientTo} border ${borderColor} rounded-2xl p-5`}>
+    <View className={`${gradientFrom} ${gradientTo} border ${borderColor} rounded-3xl p-6 shadow-lg backdrop-blur-sm`}>
       <View className="flex-row items-start">
-        <Text className="text-3xl mr-3">{emoji}</Text>
+        <View className="bg-white/20 dark:bg-black/20 rounded-2xl p-3 mr-4">
+          <Text className="text-3xl">{emoji}</Text>
+        </View>
         <View className="flex-1">
-          <Text className={`${textColor} font-bold text-base mb-1`}>
+          <Text className={`${textColor} font-bold text-lg mb-2`}>
             {title}
           </Text>
-          <Text className={`${textColor.replace('900', '800').replace('100', '200')} text-sm leading-5`}>
+          <Text className={`${textColor.replace('900', '700').replace('100', '300')} text-sm leading-6`}>
             {description}
           </Text>
         </View>
