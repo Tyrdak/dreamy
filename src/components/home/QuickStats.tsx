@@ -5,13 +5,11 @@ import { Text, View } from 'react-native';
 interface QuickStatsProps {
   totalDreams: number;
   averageClarity: number;
-  moonPhasesCount: number;
 }
 
 export const QuickStats: React.FC<QuickStatsProps> = ({
   totalDreams,
   averageClarity,
-  moonPhasesCount,
 }) => {
   return (
     <View>
@@ -30,12 +28,6 @@ export const QuickStats: React.FC<QuickStatsProps> = ({
             {averageClarity.toFixed(1)}
           </Text>
           <Text className="text-gray-600 dark:text-gray-400 text-xs">Clarté moy.</Text>
-        </View>
-        <View className="flex-1 bg-white dark:bg-dream-dusk rounded-2xl p-4 shadow">
-          <Text className="text-2xl font-bold text-primary-600 mb-1">
-            {moonPhasesCount}
-          </Text>
-          <Text className="text-gray-600 dark:text-gray-400 text-xs">Phases</Text>
         </View>
       </View>
     </View>

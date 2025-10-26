@@ -2,7 +2,6 @@
 
 export * from './affirmationAPI';
 export * from './dreamShareService';
-export * from './moonApi';
 export * from './notificationService';
 export * from './quotesApi';
 

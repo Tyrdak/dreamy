@@ -5,7 +5,6 @@ import { Alert, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../components';
 import { BasicInfoSection, DetailsSection, EmotionsSection, FormHeader } from '../components/add-dream';
-import { fetchMoonPhase } from '../services';
 import { getAllUsedTags, saveDream } from '../storage';
 import { Dream, DreamType, EmotionalState, SleepQuality, Tone } from '../types';
 import { generateDreamId } from '../utils';
@@ -98,12 +97,9 @@ export const AddDreamScreen: React.FC<AddDreamScreenProps> = ({ navigation }) =>
     setLoading(true);
 
     try {
-      const moonPhaseData = await fetchMoonPhase(formData.date);
       const newDream: Dream = {
         id: generateDreamId(),
         ...formData,
-        moonPhase: moonPhaseData.phaseName as any,
-        moonPhaseEmoji: moonPhaseData.emoji,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };

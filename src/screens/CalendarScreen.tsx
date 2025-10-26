@@ -4,9 +4,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { DreamCard } from '../components/ui';
 import { CalendarView, DateHeader, MonthStatsCard } from '../components/calendar';
-import { getMoonPhase } from '../services';
+import { DreamCard } from '../components/ui';
 import { getDreams } from '../storage';
 import { Dream } from '../types';
 
@@ -54,8 +53,6 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ navigation }) =>
     setSelectedDate(day.dateString);
     updateDreamsForDate(day.dateString, dreams);
   };
-
-  const moonPhase = getMoonPhase(new Date(selectedDate));
 
   const monthStats = useMemo(() => {
     const currentMonth = new Date(selectedDate).getMonth();
@@ -124,8 +121,6 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ navigation }) =>
         <DateHeader
           dateMessage={getDateMessage()}
           formattedDate={getFormattedDate()}
-          moonPhaseEmoji={moonPhase.emoji}
-          moonPhaseName={moonPhase.phaseName}
           dreamsCount={dreamsForSelectedDate.length}
         />
 

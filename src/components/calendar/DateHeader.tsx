@@ -5,16 +5,12 @@ import { Text, View } from 'react-native';
 interface DateHeaderProps {
   dateMessage: string;
   formattedDate: string;
-  moonPhaseEmoji: string;
-  moonPhaseName: string;
   dreamsCount: number;
 }
 
 export const DateHeader: React.FC<DateHeaderProps> = ({
   dateMessage,
   formattedDate,
-  moonPhaseEmoji,
-  moonPhaseName,
   dreamsCount,
 }) => {
   return (
@@ -26,12 +22,6 @@ export const DateHeader: React.FC<DateHeaderProps> = ({
           </Text>
           <Text className="text-2xl font-bold text-dream-night dark:text-dream-cloud">
             {formattedDate}
-          </Text>
-        </View>
-        <View className="items-center">
-          <Text className="text-5xl mb-1">{moonPhaseEmoji}</Text>
-          <Text className="text-gray-500 dark:text-gray-400 text-xs text-center">
-            {moonPhaseName}
           </Text>
         </View>
       </View>

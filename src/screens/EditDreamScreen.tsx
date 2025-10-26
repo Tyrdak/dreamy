@@ -6,7 +6,6 @@ import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DreamForm } from '../components/dream-form';
 import { useDreamForm } from '../hooks/useDreamForm';
-import { fetchMoonPhase } from '../services';
 import { getDreamById, updateDream } from '../storage';
 import { Dream, DreamType } from '../types';
 
@@ -51,8 +50,6 @@ export const EditDreamScreen: React.FC<EditDreamScreenProps> = ({ navigation, ro
       setSaving(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-      const moonPhase = await fetchMoonPhase(form.date.toISOString().split('T')[0]);
-
       const updatedDream: Dream = {
         ...originalDream!,
         title: form.title.trim() || originalDream!.title,
@@ -67,7 +64,6 @@ export const EditDreamScreen: React.FC<EditDreamScreenProps> = ({ navigation, ro
         tags: form.tags,
         characters: form.characters,
         location: form.locations.join(', ') || originalDream!.location,
-        moonPhase: originalDream!.moonPhase,
         updatedAt: new Date().toISOString(),
       };
 

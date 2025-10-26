@@ -5,8 +5,7 @@ import React, { useCallback, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DreamCard, StreakCard } from '../components';
-import { ExploreGrid, MoonPhaseCard, QuickStats, WelcomeCard } from '../components/home';
-import { getMoonPhase } from '../services';
+import { AffirmationCard, ExploreGrid, QuickStats, WelcomeCard } from '../components/home';
 import { getDreams, getDreamStreak, getUserProfile } from '../storage';
 import { Dream, DreamStreak } from '../types';
 import { calculateDreamStatistics } from '../utils';
@@ -21,7 +20,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [streak, setStreak] = useState<DreamStreak | null>(null);
   const [dreams, setDreams] = useState<Dream[]>([]);
   const [stats, setStats] = useState<any>(null);
-  const moonPhase = getMoonPhase(new Date());
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -88,9 +86,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="px-6 mt-5">
-          <MoonPhaseCard {...moonPhase} />
-        </View>
+        <AffirmationCard />
 
         {streak && streak.currentStreak > 0 && (
           <View className="mt-4">
@@ -109,7 +105,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             <QuickStats
               totalDreams={stats.totalDreams}
               averageClarity={stats.averageClarity}
-              moonPhasesCount={Object.keys(stats.dreamsByMoonPhase).length}
             />
           </View>
         )}
