@@ -5,14 +5,10 @@ import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SectionHeader, SettingButton, SettingRow } from '../components/settings';
 import {
-  exportDreamsAsJSON,
-  exportDreamsAsText,
-  exportStatsAsText,
-  sendTestNotification
+    sendTestNotification
 } from '../services';
-import { getDreams, getSettings, resetAllData, updateSettings } from '../storage';
+import { getSettings, resetAllData, updateSettings } from '../storage';
 import { Settings } from '../types';
-import { calculateDreamStatistics } from '../utils';
 
 interface SettingsScreenProps {
   navigation: any;
@@ -37,42 +33,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
     setSettings(updated);
   };
 
-  const handleExportJSON = async () => {
-    try {
-      const dreams = await getDreams();
-      const { getUserProfile } = await import('../storage');
-      const profile = await getUserProfile();
-      await exportDreamsAsJSON(dreams, profile?.username || 'User');
-      Alert.alert('Succès', 'Vos rêves ont été exportés en JSON !');
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible d\'exporter les données');
-    }
-  };
-
-  const handleExportText = async () => {
-    try {
-      const dreams = await getDreams();
-      const { getUserProfile } = await import('../storage');
-      const profile = await getUserProfile();
-      await exportDreamsAsText(dreams, profile?.username || 'User');
-      Alert.alert('Succès', 'Vos rêves ont été exportés en texte !');
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible d\'exporter les données');
-    }
-  };
-
-  const handleExportStats = async () => {
-    try {
-      const dreams = await getDreams();
-      const stats = calculateDreamStatistics(dreams);
-      const { getUserProfile } = await import('../storage');
-      const profile = await getUserProfile();
-      await exportStatsAsText(stats, profile?.username || 'User');
-      Alert.alert('Succès', 'Vos statistiques ont été exportées !');
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible d\'exporter les statistiques');
-    }
-  };
 
   const handleTestNotification = async () => {
     await sendTestNotification('daily');
@@ -88,6 +48,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
       Alert.alert('Erreur', 'Impossible d\'envoyer la notification de test');
     }
   };
+
 
   const handleResetData = async () => {
     Alert.alert(
@@ -198,27 +159,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
           )}
         </View>
 
-        <SectionHeader icon="📤" title="Export des données" />
-        <View className="px-6">
-          <SettingButton
-            title="Exporter en JSON"
-            subtitle="Format lisible par machine"
-            icon="code"
-            onPress={handleExportJSON}
-          />
-          <SettingButton
-            title="Exporter en texte"
-            subtitle="Format lisible par humain"
-            icon="document-text"
-            onPress={handleExportText}
-          />
-          <SettingButton
-            title="Exporter les statistiques"
-            subtitle="Résumé de vos rêves"
-            icon="stats-chart"
-            onPress={handleExportStats}
-          />
-        </View>
 
         <SectionHeader icon="ℹ️" title="À propos" />
         <View className="px-6">

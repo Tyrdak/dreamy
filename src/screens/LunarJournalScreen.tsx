@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getMoonPhaseDescription } from '../services';
 import { getDreams } from '../storage';
 import { Dream } from '../types';
 
@@ -106,7 +105,7 @@ export const LunarJournalScreen: React.FC<LunarJournalScreenProps> = ({ navigati
                 {mostActive[1].count} rêves enregistrés
               </Text>
               <Text className="text-white/70 text-xs text-center italic">
-                {getMoonPhaseDescription(mostActive[0])}
+                Phase lunaire la plus active pour vos rêves
               </Text>
             </View>
           </View>
@@ -176,7 +175,7 @@ export const LunarJournalScreen: React.FC<LunarJournalScreenProps> = ({ navigati
                       </View>
 
                       <Text className="text-gray-600 dark:text-gray-400 text-sm italic text-center">
-                        {getMoonPhaseDescription(phase)}
+                        Phase lunaire
                       </Text>
                     </View>
                   </View>
