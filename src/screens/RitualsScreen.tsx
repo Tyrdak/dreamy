@@ -6,9 +6,9 @@ import React, { useCallback, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExerciseCard, FilterTabs, QuoteCard } from '../components/rituals';
-import { fetchDailyQuote } from '../services';
-import { getRitualsData, updateDailyQuote } from '../storage';
-import { DailyQuote, EXERCISES, ExerciseType, RitualsData } from '../types';
+import { fetchAffirmation } from '../services';
+import { getRitualsData, updateDailyAffirmation } from '../storage';
+import { EXERCISES, ExerciseType, RitualsData } from '../types';
 
 interface RitualsScreenProps {
   navigation: any;
@@ -17,8 +17,8 @@ interface RitualsScreenProps {
 export const RitualsScreen: React.FC<RitualsScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const [rituals, setRituals] = useState<RitualsData | null>(null);
-  const [quote, setQuote] = useState<DailyQuote | null>(null);
-  const [loadingQuote, setLoadingQuote] = useState(false);
+  const [affirmation, setAffirmation] = useState<string | null>(null);
+  const [loadingAffirmation, setLoadingAffirmation] = useState(false);
   const [selectedType, setSelectedType] = useState<ExerciseType | 'all'>('all');
 
   useFocusEffect(
@@ -32,24 +32,30 @@ export const RitualsScreen: React.FC<RitualsScreenProps> = ({ navigation }) => {
     setRituals(ritualsData);
 
     const today = new Date().toISOString().split('T')[0];
-    const lastQuoteDate = ritualsData.lastQuoteDate
-      ? new Date(ritualsData.lastQuoteDate).toISOString().split('T')[0]
+    const lastAffirmationDate = ritualsData.lastAffirmationDate
+      ? new Date(ritualsData.lastAffirmationDate).toISOString().split('T')[0]
       : null;
 
-    if (ritualsData.dailyQuote && lastQuoteDate === today) {
-      setQuote(ritualsData.dailyQuote);
+    if (ritualsData.dailyAffirmation && lastAffirmationDate === today) {
+      setAffirmation(ritualsData.dailyAffirmation);
     } else {
-      loadNewQuote();
+      loadNewAffirmation();
     }
   };
 
-  const loadNewQuote = async () => {
+  const loadNewAffirmation = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLoadingQuote(true);
-    const newQuote = await fetchDailyQuote();
-    setQuote(newQuote);
-    await updateDailyQuote(newQuote);
-    setLoadingQuote(false);
+    setLoadingAffirmation(true);
+    try {
+      const newAffirmation = await fetchAffirmation();
+      setAffirmation(newAffirmation);
+      await updateDailyAffirmation(newAffirmation);
+    } catch (error) {
+      console.error('Erreur lors du chargement de l\'affirmation:', error);
+      setAffirmation('Je suis capable de réaliser mes rêves et d\'atteindre mes objectifs.');
+    } finally {
+      setLoadingAffirmation(false);
+    }
   };
 
   const getRecommendedExercise = () => {
@@ -99,7 +105,7 @@ export const RitualsScreen: React.FC<RitualsScreenProps> = ({ navigation }) => {
       </View>
 
       <ScrollView className="flex-1">
-        <QuoteCard quote={quote} loading={loadingQuote} onRefresh={loadNewQuote} />
+        <QuoteCard affirmation={affirmation} loading={loadingAffirmation} onRefresh={loadNewAffirmation} />
 
         <View className="px-6 mt-6">
           <Text className="text-lg font-bold text-dream-night dark:text-dream-cloud mb-2">

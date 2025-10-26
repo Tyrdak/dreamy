@@ -217,8 +217,8 @@ export interface ExerciseStreak {
 }
 
 export interface RitualsData {
-  lastQuoteDate?: string;
-  dailyQuote?: DailyQuote;
+  lastAffirmationDate?: string;
+  dailyAffirmation?: string;
   exerciseStreak: ExerciseStreak;
   completedExercises: ExerciseSession[];
   favoriteExercise?: string;

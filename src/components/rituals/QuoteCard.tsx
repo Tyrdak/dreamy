@@ -1,21 +1,20 @@
-// Carte de citation quotidienne
+// Carte d'affirmation quotidienne
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
-import { DailyQuote } from '../../types';
 
 interface QuoteCardProps {
-  quote: DailyQuote | null;
+  affirmation: string | null;
   loading: boolean;
   onRefresh: () => void;
 }
 
-export const QuoteCard: React.FC<QuoteCardProps> = ({ quote, loading, onRefresh }) => {
+export const QuoteCard: React.FC<QuoteCardProps> = ({ affirmation, loading, onRefresh }) => {
   return (
     <View className="px-6 mt-6">
       <View className="bg-gradient-to-br from-primary-600 to-purple-600 rounded-3xl p-6 shadow-xl">
         <View className="flex-row justify-between items-start mb-4">
-          <Text className="text-white text-lg font-bold">✨ Citation du jour</Text>
+          <Text className="text-white text-lg font-bold">✨ Affirmation du jour</Text>
           <TouchableOpacity
             onPress={onRefresh}
             disabled={loading}
@@ -29,13 +28,10 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({ quote, loading, onRefresh 
           </TouchableOpacity>
         </View>
 
-        {quote ? (
-          <>
-            <Text className="text-white text-base italic mb-4">"{quote.text}"</Text>
-            <Text className="text-white/80 text-sm">— {quote.author}</Text>
-          </>
+        {affirmation ? (
+          <Text className="text-white text-base italic">&ldquo;{affirmation}&rdquo;</Text>
         ) : (
-          <Text className="text-white/80 text-base">Chargement de votre citation...</Text>
+          <Text className="text-white/80 text-base">Chargement de votre affirmation...</Text>
         )}
       </View>
     </View>
