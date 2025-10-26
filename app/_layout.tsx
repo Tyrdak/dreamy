@@ -1,24 +1,70 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+// Layout principal de l'application avec Expo Router
+
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { useEffect } from 'react';
+import 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import "../global.css";
+import { initializeNotifications } from '../src/services';
+import { getSettings, hasCompletedOnboarding } from '../src/storage';
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const router = useRouter();
+  const segments = useSegments();
+
+  useEffect(() => {
+    checkOnboarding();
+    setupNotifications();
+  }, []);
+
+  const checkOnboarding = async () => {
+    const completed = await hasCompletedOnboarding();
+
+    // Si l'onboarding n'est pas complété et qu'on n'est pas déjà sur welcome/onboarding
+    if (
+      !completed &&
+      !(segments as string[]).includes('welcome') &&
+      !(segments as string[]).includes('onboarding')
+    ) {
+      router.replace('/welcome');
+    }
+  };
+
+  const setupNotifications = async () => {
+    const settings = await getSettings();
+    await initializeNotifications({
+      dailyReminderEnabled: settings.notificationsEnabled,
+      dailyReminderTime: settings.notificationTime,
+      lucidModeEnabled: settings.lucidModeEnabled,
+      dailyQuoteEnabled: settings.dailyQuoteEnabled,
+    });
+  };
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="auto" />
-    </ThemeProvider>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      >
+        <Stack.Screen name="welcome" />
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="add-dream" />
+        <Stack.Screen name="dream-details" />
+        <Stack.Screen name="profile" />
+        <Stack.Screen name="settings" />
+        <Stack.Screen name="insights" />
+        <Stack.Screen name="badges" />
+        <Stack.Screen name="rituals" />
+        <Stack.Screen name="lunar-journal" />
+        <Stack.Screen name="constellation" />
+        <Stack.Screen name="calendar" />
+        <Stack.Screen name="exercise" />
+      </Stack>
+    </GestureHandlerRootView>
   );
 }
