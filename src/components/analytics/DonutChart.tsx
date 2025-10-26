@@ -1,4 +1,4 @@
-// Graphique en donut pour visualiser les proportions
+// Graphique en donut amélioré pour visualiser les proportions
 import React from 'react';
 import Svg, { Circle, Path, Text as SvgText } from 'react-native-svg';
 
@@ -12,8 +12,8 @@ export const DonutChart: React.FC<DonutChartProps> = ({ data, width, height = 20
   const total = data.reduce((sum, item) => sum + item.value, 0);
   if (total === 0) return null;
 
-  const radius = 80;
-  const innerRadius = 55;
+  const radius = 85;
+  const innerRadius = 60;
   const centerX = width / 2;
   const centerY = height / 2;
 
@@ -39,6 +39,9 @@ export const DonutChart: React.FC<DonutChartProps> = ({ data, width, height = 20
 
   return (
     <Svg width={width} height={height}>
+      {/* Fond du donut */}
+      <Circle cx={centerX} cy={centerY} r={radius} fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2" />
+      
       {data.map((item, index) => {
         const percentage = (item.value / total) * 100;
         const angle = (percentage / 100) * 360;
@@ -47,14 +50,26 @@ export const DonutChart: React.FC<DonutChartProps> = ({ data, width, height = 20
         const path = createArc(currentAngle, endAngle, radius, innerRadius);
         currentAngle = endAngle;
 
-        return <Path key={index} d={path} fill={item.color} />;
+        return (
+          <Path 
+            key={index} 
+            d={path} 
+            fill={item.color} 
+            stroke="#ffffff" 
+            strokeWidth="2"
+            opacity="0.9"
+          />
+        );
       })}
 
-      <Circle cx={centerX} cy={centerY} r={innerRadius} fill="#ffffff" />
+      {/* Centre du donut avec gradient */}
+      <Circle cx={centerX} cy={centerY} r={innerRadius} fill="#ffffff" stroke="#e2e8f0" strokeWidth="1" />
+      
+      {/* Texte central */}
       <SvgText
         x={centerX}
-        y={centerY - 5}
-        fontSize="28"
+        y={centerY - 8}
+        fontSize="32"
         fontWeight="bold"
         fill="#1f2937"
         textAnchor="middle"
@@ -63,12 +78,24 @@ export const DonutChart: React.FC<DonutChartProps> = ({ data, width, height = 20
       </SvgText>
       <SvgText
         x={centerX}
-        y={centerY + 15}
+        y={centerY + 18}
+        fontSize="14"
+        fill="#6b7280"
+        textAnchor="middle"
+        fontWeight="500"
+      >
+        rêves
+      </SvgText>
+      
+      {/* Légende */}
+      <SvgText
+        x={centerX}
+        y={centerY + 35}
         fontSize="12"
         fill="#9ca3af"
         textAnchor="middle"
       >
-        rêves
+        Types de rêves
       </SvgText>
     </Svg>
   );

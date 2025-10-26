@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { Animated, Dimensions, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BarChart, DonutChart, InsightCard, StatCard, ToneCard, WeeklyChart } from '../components/analytics';
+import { InsightCard, StatCard, ToneCard, WeeklyChart } from '../components/analytics';
 import { getDreams } from '../storage';
 import { Dream, DreamStatistics } from '../types';
 import { analyzeKeywords, calculateDreamStatistics } from '../utils';
@@ -104,33 +104,6 @@ export const InsightsScreen: React.FC<InsightsScreenProps> = ({ navigation }) =>
     );
   }
 
-  const dreamTypeData = Object.entries(stats.dreamsByType)
-    .filter(([_, count]) => count > 0)
-    .map(([type, count], index) => ({
-      label: type,
-      value: count,
-      color: ['#7c6df1', '#6d28d9', '#a78bfa', '#f59e0b', '#10b981'][index % 5],
-    }));
-
-  const emotionData = stats.mostCommonEmotions.slice(0, 5).map((emotion) => {
-    const config: Record<string, { emoji: string; color: string }> = {
-      joyeux: { emoji: '😊', color: '#10b981' },
-      calme: { emoji: '😌', color: '#3b82f6' },
-      anxieux: { emoji: '😰', color: '#f59e0b' },
-      triste: { emoji: '😢', color: '#6366f1' },
-      excité: { emoji: '🤩', color: '#ec4899' },
-      confus: { emoji: '😕', color: '#8b5cf6' },
-      neutre: { emoji: '😐', color: '#6b7280' },
-    };
-    const c = config[emotion] || { emoji: '😐', color: '#6b7280' };
-    const count = dreams.filter(d => d.emotionalStateBefore === emotion || d.emotionalStateAfter === emotion).length;
-    return {
-      label: emotion.charAt(0).toUpperCase() + emotion.slice(1),
-      value: count,
-      emoji: c.emoji,
-      color: c.color,
-    };
-  });
 
   return (
     <View className="flex-1 bg-dream-cloud dark:bg-dream-night">
@@ -164,12 +137,6 @@ export const InsightsScreen: React.FC<InsightsScreenProps> = ({ navigation }) =>
           </View>
         </View>
 
-        <View className="px-6 mt-6">
-          <Text className="text-xl font-bold text-dream-night dark:text-dream-cloud mb-3">🎭 Types de rêves</Text>
-          <View className="bg-white dark:bg-dream-dusk rounded-2xl p-6 shadow-lg">
-            <DonutChart data={dreamTypeData} width={CHART_WIDTH} />
-          </View>
-        </View>
 
         <View className="px-6 mt-6">
           <Text className="text-xl font-bold text-dream-night dark:text-dream-cloud mb-3">🎨 Tonalités</Text>
@@ -187,14 +154,6 @@ export const InsightsScreen: React.FC<InsightsScreenProps> = ({ navigation }) =>
           </View>
         </View>
 
-        {emotionData.length > 0 && (
-          <View className="px-6 mt-6">
-            <Text className="text-xl font-bold text-dream-night dark:text-dream-cloud mb-3">💫 Émotions</Text>
-            <View className="bg-white dark:bg-dream-dusk rounded-2xl p-6 shadow-lg">
-              <BarChart data={emotionData} width={CHART_WIDTH} />
-            </View>
-          </View>
-        )}
 
         <View className="px-6 mt-6 mb-8">
           <Text className="text-xl font-bold text-dream-night dark:text-dream-cloud mb-3">💡 Insights</Text>
@@ -214,4 +173,3 @@ export const InsightsScreen: React.FC<InsightsScreenProps> = ({ navigation }) =>
     </View>
   );
 };
-
