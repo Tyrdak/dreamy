@@ -135,7 +135,6 @@
   - Choix du thème (clair/sombre/auto)
   - Sélection visuelle
 - [x] Section Données
-  - Export des données (structure)
   - Réinitialisation complète avec confirmation
   - Message de sécurité
 - [x] Section À propos
@@ -182,7 +181,6 @@
   - `setOnboardingCompleted(boolean)` - Marquer
 - [x] Utilitaires
   - `resetAllData()` - Réinitialisation complète
-  - `exportAllData()` - Export JSON
 - [x] Gestion des erreurs sur toutes les fonctions
 
 ### 8. Utilitaires (100% ✓)
@@ -404,7 +402,6 @@ L'application est **100% fonctionnelle** et prête à être testée sur :
 ### Fonctionnalités Bonus
 - ✅ Statistiques et visualisations avancées
 - ✅ Filtrage combiné performant
-- ✅ Export des données (structure)
 - ✅ Mode sombre/clair automatique
 
 ### Stack Technique

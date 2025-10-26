@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { DetailsCard, DreamHeader, EmotionsCard, InfoCard } from '../components/dream-details';
 import { Button } from '../components/ui';
-import { getMoonPhaseDescription } from '../services';
+import { getMoonPhaseDescription, shareDreamAsFile } from '../services';
 import { deleteDream, getDreamById } from '../storage';
 import { Dream } from '../types';
 
@@ -54,6 +54,19 @@ export const DreamDetailsScreen: React.FC<DreamDetailsScreenProps> = ({ navigati
     navigation.navigate('EditDream', { dreamId });
   };
 
+  const handleShare = async () => {
+    if (!dream) return;
+    
+    try {
+      const success = await shareDreamAsFile(dream);
+      if (success) {
+        Alert.alert('Succès', 'Votre rêve a été partagé !');
+      }
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de partager le rêve');
+    }
+  };
+
   if (loading) {
     return (
       <View className="flex-1 bg-dream-cloud dark:bg-dream-night justify-center items-center">
@@ -82,6 +95,13 @@ export const DreamDetailsScreen: React.FC<DreamDetailsScreenProps> = ({ navigati
             <Ionicons name="arrow-back" size={24} color="#7c6df1" />
           </TouchableOpacity>
           <View className="flex-row space-x-6 gap-4">
+            <TouchableOpacity 
+              onPress={handleShare}
+              className="p-2 rounded-lg bg-green-50 dark:bg-green-900"
+              style={{ minWidth: 44, minHeight: 44, justifyContent: 'center', alignItems: 'center' }}
+            >
+              <Ionicons name="share-outline" size={24} color="#10b981" />
+            </TouchableOpacity>
             <TouchableOpacity 
               onPress={handleEdit}
               className="p-2 rounded-lg bg-primary-50 dark:bg-primary-900"

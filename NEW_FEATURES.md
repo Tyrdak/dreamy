@@ -150,27 +150,6 @@ Toutes les nouvelles features immersives ajoutées à l'application Journal de R
 - Classement par fréquence
 - Insights sur patterns récurrents
 
-### 9. 📤 Export Avancé des Données
-
-**3 formats d'export**
-
-**1. Export JSON**
-- Données structurées
-- Métadonnées complètes
-- Format machine-readable
-- Parfait pour backup/import
-
-**2. Export Texte (Journal)**
-- Format lisible et imprimable
-- Un rêve par page avec séparateurs
-- Toutes les informations formatées
-- Description complète et détails
-
-**3. Export Statistiques**
-- Analyse complète en texte
-- Tous les chiffres clés
-- Répartitions détaillées
-- Format rapport
 
 **Partage**
 - Utilise `expo-sharing`
@@ -220,7 +199,6 @@ Toutes les nouvelles features immersives ajoutées à l'application Journal de R
 ### Nouveaux Services
 ```typescript
 - quotesApi.ts (fetchDailyQuote, getRandomQuote)
-- exportService.ts (exportDreamsAsJSON, exportDreamsAsText, exportStatsAsText)
 - Notifications améliorées (scheduleDailyNotification avec phases, scheduleRealityChecks)
 ```
 
@@ -271,10 +249,6 @@ Depuis le **Profil**, accédez à :
 4. Choisir la fréquence (2-8h)
 5. Recevoir des reality checks aléatoires
 
-### Exporter vos Données
-1. Profil → Paramètres → Données
-2. "Exporter mes rêves" → Choisir format
-3. "Exporter les statistiques" → Partager
 
 ## 🎨 Design & UX
 

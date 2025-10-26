@@ -286,36 +286,6 @@ export const resetAllData = async (): Promise<boolean> => {
   }
 };
 
-/**
- * Exporte toutes les données en JSON
- */
-export const exportAllData = async (): Promise<string | null> => {
-  try {
-    const [dreams, profile, settings, streak, badges, rituals] = await Promise.all([
-      getDreams(),
-      getUserProfile(),
-      getSettings(),
-      getDreamStreak(),
-      getUserBadges(),
-      getRitualsData(),
-    ]);
-    
-    const data = {
-      dreams,
-      profile,
-      settings,
-      streak,
-      badges,
-      rituals,
-      exportDate: new Date().toISOString(),
-    };
-    
-    return JSON.stringify(data, null, 2);
-  } catch (error) {
-    console.error('Erreur lors de l\'export des données:', error);
-    return null;
-  }
-};
 
 // ===== GESTION DES STREAKS =====
 

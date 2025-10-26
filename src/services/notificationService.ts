@@ -241,7 +241,6 @@ export const sendTestNotification = async (type: 'daily' | 'lucid' | 'quote'): P
         break;
       case 'quote':
         const affirmation = await getAffirmation();
-        console.log('🔍 Test - Affirmation:', affirmation);
         title = '✨ Test - Affirmation';
         body = String(affirmation);
         break;

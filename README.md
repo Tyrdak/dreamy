@@ -34,7 +34,6 @@ Une application mobile React Native complète et immersive pour enregistrer, ana
 - **Paramètres Complets** :
   - Activation/désactivation des notifications
   - Choix du thème (clair/sombre/auto)
-  - Export des données
   - Réinitialisation complète
 
 - **Notifications Quotidiennes** 🔔 : Rappels personnalisables pour noter vos rêves
@@ -213,7 +212,6 @@ Profil utilisateur avec :
 Paramètres de l'application :
 - Gestion des notifications
 - Choix du thème
-- Export des données
 - Réinitialisation
 
 ### 8. InsightsScreen
@@ -290,8 +288,6 @@ saveUserProfile(profile: UserProfile): Promise<boolean>
 getSettings(): Promise<Settings>
 updateSettings(settings: Partial<Settings>): Promise<boolean>
 
-// Export
-exportAllData(): Promise<string>
 resetAllData(): Promise<boolean>
 ```
 
@@ -427,7 +423,6 @@ eas build --platform android
 - [ ] Partage de rêves
 - [ ] Rappels personnalisés multiples
 - [ ] Recherche avancée avec filtres combinés
-- [ ] Export PDF des rêves
 - [ ] Mode lecture avec ambiance sonore
 - [ ] Citation inspirante du jour
 - [ ] Graphiques plus avancés
